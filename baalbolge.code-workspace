@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"[haskell]": {
+			"editor.tabSize": 2,
+			"editor.detectIndentation": false,
+			"editor.rulers": [90]
+		},
+	},
+	"extensions": {
+		"recommendations": [
+			"hoovercj.haskell-linter",
+			"haskell.haskell",
+			"vigoo.stylish-haskell"
+		]
+	}
+}
