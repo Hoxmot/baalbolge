@@ -1,0 +1,549 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[polish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{multirow}\usepackage{tikz}
+\usepackage[normalem]{ulem}
+\usepackage[top=3cm, bottom=4.5cm, left=3cm, right=3cm]{geometry}
+
+\hypersetup{
+    colorlinks=true,
+    urlcolor=cyan,
+    linkcolor=blue,
+    pdfpagemode=FullScreen,
+}
+
+\title{Baalbolge -- Deklaracja języka}
+\author{Kamil Bladoszewski}
+\date{Kwiecień 2022}
+
+\def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;} 
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\pagebreak
+
+\section{Gramatyka języka}
+
+\begin{lstlisting}
+Program. Exps ::= [Exp] ;
+
+EInt.      Exp ::= Integer ;
+EBool.     Exp ::= Bool ;
+EFunc.     Exp ::= "(" Var [Exp] ")" ;
+EInternal. Exp ::= "(" InternalFunc ")" ;
+EConc.     Exp ::= [SameState] ;
+EList.     Exp ::= List ;
+EVar.      Exp ::= Var ;
+EUnit.     Exp ::= "()" ;
+
+BTrue.  Bool ::= "True" ;
+BFalse. Bool ::= "False" ;
+
+LList. List ::= "[" [Exp] "]" ;
+
+SState. SameState ::= Exp ;
+
+IFuncDecl. InternalFunc ::= Type Var "[" ArgsList "]" [Exp] ;
+IVarDecl.  InternalFunc ::= Type Var Exp ;
+ITransact. InternalFunc ::= "transaction" [Exp] ;
+IIf.       InternalFunc ::= "if" Exp Exp Exp ;
+IWhile.    InternalFunc ::= "while" Exp ;
+IWhen.     InternalFunc ::= "when" Exp Exp ;
+
+AList. ArgsList ::= [Arg] ;
+
+AArg. Arg ::= "(" Type Var ")" ;
+
+TInt.  Type ::= "int" ;
+TBool. Type ::= "bool" ;
+TVar.  Type ::= "var" ;
+TList. Type ::= "[" Type "]" ;
+TUnit. Type ::= "$" ;
+
+token Var (
+  (letter | '_' | '\'' | [".+-/*%?<>=:^"])
+  (letter | digit | '_' | '\'' | [".+-/*%?<>=:^"])*
+) ;
+
+comment "#" ;
+separator Exp " ";
+separator Arg " " ;
+separator nonempty SameState ";" ;
+entrypoints Exps ;
+
+\end{lstlisting}
+
+\pagebreak
+
+\section{Opis języka}
+
+Język Baalbolge to język imperatywny z elementami funkcyjnymi i składnią inspirowaną językami z rodziny Lisp.
+
+\subsection{Program}
+
+Program składa się z listy wyrażeń. Wyrażaniem jest:
+
+\begin{itemize}
+    \item Wartość logiczna: \texttt{True} lub \texttt{False}; Patrz: \ref{typy} Typy
+    \item Liczba; Patrz: \ref{typy} Typy
+    \item Lista wartości; Patrz: \ref{typy} Typy
+    \item Zmienna
+    \item Wywołanie funkcji; Patrz: \ref{func:call} Wywołanie funkcji
+    \item Wywołanie funkcji spacjalnej; Patrz: \ref{func:special} Funkcje specjalne
+    \item Wyrażenie tego samego stanu; Patrz: \ref{same-state} Wyrażenia tego samego stanu
+\end{itemize}
+
+Wynikiem programu w języku Baalbolge jest pierwsze wyrażenie głównego ciała, które kończy się wartością inną niż \textit{unit}. Więcej o tym mechaniźmie można przeczytać w sekcji \ref{func:result}.
+
+\subsection{Typy}\label{typy}
+
+Baalbolge obsługiwać będzie typy: \texttt{int}, \texttt{bool}, \textit{unit} (\texttt{\$}), listy, oraz specjalny typ \texttt{var}, który reprezentuje dowolny typ.
+
+\subsubsection{\texttt{var}}\label{type:var}
+
+Dla zwykłych typów, stosowane będzie statyczne typowanie. Niestety, z uwagi na charakterystykę \texttt{var} statyczne typowanie nie jest możliwe i ewentulane sprawdzanie typów (a tym samym zgłaszanie błędów) odbędzie się w runtime.
+
+\subsubsection{Listy}
+
+Listy można dowolnie zagnieżdżać. Gdy korzystamy z typu danych \texttt{var}, lista może być dowolnie zgnieżdżona. W szczególności, zmienna typu \texttt{var} może być listą.
+
+Listy tworzymy poprzez wstawienie wyrażeń oddzielonych spacjami do pomiędzy nawiasy kwadratowe, na przykład: \texttt{[1 2 3]}.
+
+\subsection{Wbudowane operacje na wartościach}
+
+Język ma wbudowane następujące operacje na wartościach:
+
+\begin{itemize}
+    \item Dla \texttt{int} -- dodawanie (\texttt{+}), odejmowanie (\texttt{-}), mnożenie (\texttt{*}), dzielenie (\texttt{/}), modulo (\texttt{\%}), porównywanie (wieksze (\texttt{>}), mniejsze (\texttt{<}), równe (\texttt{=}))
+    \item Dla \texttt{bool} -- porównywanie przez równość (\texttt{=})
+    \item Dla list -- dodawanie elementu na początku (\texttt{:}) lub na końcu (\texttt{+})
+\end{itemize}
+
+Wszystkie wbudowane operacje na wartościach będą wywoływane tak jak każda funkcja w języku. Pozostałe standardowe operacje zostaną zaimplementowane w języku Baalbolge i dołączone w bibliotece standardowej:
+
+\begin{itemize}
+    \item Dla \texttt{int} -- większe lub równe (\texttt{>=}), mniejsze lub równe (\texttt{<=})
+    \item Dla \texttt{bool} -- \texttt{and}, \texttt{or}, \texttt{not}
+\end{itemize}
+
+\subsection{Wywołanie funkcji}\label{func:call}
+
+Funkcje wywołujemy poprzedni wpisanie w nawiasach najpierw nazwy funkcji, a następnie listy wyrażeń, których wartości będą argumentami. Argumenty przekazywane są przez wartość. Na przykład:
+
+\begin{lstlisting}
+(+ b (+ 3 4))
+(func 7 True a [1 2 3])
+\end{lstlisting}
+
+\subsection{Funkcje specjalne}\label{func:special}
+
+Język Baalbolge ma cztery funckje specjalne, które są elementami języka i będą obsługiwane przez interpreter nieco inaczej niż pozostałe funkcje, gdyż wartości podanych tam wyrażeń będą obliczane gdy zajdzie taka potrzeba zamiast, gdy w momencie wywołania funkcji. Do rozważania na przyszłe rozszerzenia języka Baalbolge jest specjalny konstruktor funkcji, który leniwie będzie obliczał wartości argumentów.
+
+Wbudowane funkcje specjalne to:
+
+\begin{itemize}
+    \item Deklaracja zmiennych
+    \item Deklaracja funkcji
+    \item Deklaracja lambdy
+    \item \texttt{if}
+    \item \texttt{while}
+    \item \texttt{when}
+    \item Transakcja; Patrz: \ref{trans} Transakcje
+\end{itemize}
+
+\subsubsection{Deklaracja zmiennych}\label{var:decl}
+
+Zmienne deklarujemy w nawiasach, najpierw podajemy interesujący nas typ, następnie nazwę zmiennej, a na końcu wyrażenie, którego wynik będzie wynikiem zmiennej. Wyrażenie obliczane jest w momencie deklaracji zmiennej.
+
+Nazwa zmiennej może zawierać litery, cyfry oraz znaki: "\texttt{.+-/*\%?<>=:\^}" (cudzysłów nie jest wśród tych znaków). Nazwa zmiennej nie może się jednak zaczynać od cyfry.
+
+Przykładowe deklaracje zmiennych:
+
+\begin{lstlisting}
+(int a 1)
+(bool b? True)
+(int c (+ a 1))
+([int] li [1 2 3])
+([var] lv [5 False])
+(var v [5 False])
+\end{lstlisting}
+
+Wynikiem deklaracji zmiennej jest \textit{unit}.
+
+\subsubsection{Deklaracja funkcji}\label{func:decl}
+
+Funckje deklarowane są podobnie jak zmienne. W nawiasach podajemy najpierw typ wynikowy, następnie nazwę funkcji, później listę argumentów w nawiasach kwadratowych, a na końcu następujące po sobie wyrażenia.
+
+Deklaracja każdego argumentu wygląda podobnie jak deklaracja zmiennej: w nawiasach podajemy typ argumentu, a następnie nazwę. Różnicą jest brak wyrażenia, które będzie wartością funkcji. Przy późniejszej pracy nad językiem można rozważyć mechanizm domyślnych wartości argumentów, podobny do tego w Pythonie.
+
+Wynikiem funkcji jest wynik pierwszego wyrażenia, który nie jest typu \textit{unit}. Więcej o tym mechanizmie można przeczytać w sekcji \ref{func:result}.
+
+Przykładowe deklaracje funkcji:
+
+\begin{lstlisting}
+(int function-1 []
+  1)
+
+(int function-name-2 [(int arg1) (bool arg2)]
+  (int x 0)
+  (if arg2
+    x
+    (+ x arg1)))
+\end{lstlisting}
+
+Wynikiem deklaracji funkcji jest \textit{unit}.
+
+\subsubsection{Lambda}
+
+Lambdy deklarujemy podobnie jak funkcje, ale z różnicą, że nie podajemy ich nazwy:
+
+\begin{lstlisting}
+(int [(int x) (int y)]
+  (if (< x y)
+    y
+    x))
+\end{lstlisting}
+
+Wynikiem deklaracji lambdy jest lambda.
+
+\subsection{Wynik funkcji}\label{func:result}
+
+Wynikiem funkcji jest wynik pierwszego wyrażenia, które nie jest typu \textit{unit}.
+
+Mechanizm działa następująco: wynik każdego wyrażenia przekazywany jest do miejsca gdzie wyrażenie zostało wywołane. Takie miejsce może spodzieać się wartości (np. deklaracja zmiennej spodziewa się, że wartość wyrażenia będzie wartością zmiennej lub argument w wywołaniu funkcji jest wartością wyrażenia). Jednak w przypadku funkcji, zwracana jest pierwsza wartość wyrażenia, która nie jest \textit{unit}.
+
+Na przykład:
+
+\begin{lstlisting}
+(int funkcja []
+  (int x 1)
+  (int y (+ x 2)
+  (+ x y)
+  (+ y 5))
+\end{lstlisting}
+
+Wynikiem wywołania powyższej funkcji jest 4. Przenalizujemy linijki tego programu:
+
+\begin{enumerate}
+    \item Najpierw deklarujemy zmienną \texttt{x} równą 1. Wynikiem deklaracji zmiennej jest \textit{unit} (patrz: \ref{var:decl} Deklaracja zmiennych). Wykonujemy następną linijkę.
+    \item Następnie deklarujemy zmienną \texttt{y} równą \texttt{(+ x 2)}. Wynikiem wyrażenia \texttt{(+ x 2)} jest 3. Ta wartość przekazywana jest do deklaracji zmiennej i ponownie deklaracja zmiennej zwraca \textit{unit}.
+    \item Wynikiem wywołania jest funkcji jest 4. Jako, że nie jest to \textit{unit}, to wartość jest zwracana przez funkcję.
+    \item Poprzednia linijka zwróciła wartość, więc wyrażenie nie jest obliczane.
+\end{enumerate}
+
+Podobnie sprawa wygląda z całym programem. Jeżeli któreś z wyrażen w głównym ciele programu zakończy się wartością inną niż unit, to jest to wartość zwracana przez program. Dla przykładu:
+
+\begin{lstlisting}
+(int funkcja []
+  (int x 1)
+  (int y (+ x 2)
+  (+ x y)
+  (+ y 5))
+
+(int z 3)  
+(+ 1 1)
+(funkcja)
+\end{lstlisting}
+
+Wartość zwracana przez ten program, to 2. Jak wiemy, wywołanie funkcji \texttt{funkcja} zwraca 4, jednak wcześniej wywołane jest \texttt{(+ 1 1)}, które zwraca 2 i jest to wynik programu. Funkcja \texttt{funkcja} nie zostanie obliczona.
+
+W przypadku wcześniejszych wartości, deklaracja funkcji zwraca \textit{unit} (patrz: \ref{func:decl} Deklaracja funkcji), podobnie jak deklaracja zmiennej.
+
+\subsection{Wyrażenia tego samego stanu (obliczanie w tym samym stanie)}\label{same-state}
+
+Wyrażenia można oddzielić od siebie średnikami, wtedy każde obliczenie zostanie w takim samym stanie początkowym, a ewentualne zmiany stanu zostaną naniesione dopiero na koniec wykonywania się całej serii wyrażeń. Takie wyrażenie nazywamy: \textit{wyrażeniem tego samego stanu}.
+
+Na przykład:
+
+\begin{lstlisting}
+(int x 0)
+(int x (+ x 1)) ; (int x (+ x 1)) ; (int x (+ x 1))
+\end{lstlisting}
+
+Po wykonaniu powyższego kodu, w naszym stanie \texttt{x} wynosi 1. Wynika to z tego, że każde z wywołań \texttt{(int x (+ x 1))} wykonywało się w takim stanie początkowym, gdzie \texttt{x} wynosił 0.
+
+Jeżeli wyrażenia będą zmieniały stan na różne sposóby, to stan końcowy będzie ostatnim ze stanów. Na przykład:
+
+\begin{lstlisting}
+(int x 0)
+(int x (+ x 1)) ; (int x (+ x 2)) ; (int x (+ x 3))
+\end{lstlisting}
+
+Po wykonaniu powyższego kodu, w naszym stanie \texttt{x} wynosi 3. Wynika to z faktu, że ostatnie wyrażenie ustawiło taką wartość dla \texttt{x}.
+
+Jeżeli zmieniamy różne elementy stanu (np. różne zmienne), to stan końcowy będzie brał zmiany poszczególnych elementów z różnych wyrażeń składowych. Na przykład:
+
+\begin{lstlisting}
+(int x 0)
+(int y 0)
+(int x (+ x 1)) ; (int x (+ x 2)) ; (int y (+ y 3)) ; (int y (+ y 4))
+\end{lstlisting}
+
+Po wykonaniu powyższego kodu, w naszym stanie \texttt{x} wynosi 2, a \texttt{y} wynosi 4.
+
+\begin{enumerate}
+    \item Pierwsze wyrażenie składowe ustawia \texttt{x} na 1.
+    \item Drugie wyrażenie składowe ustawia \texttt{x} na 2.
+    \item Trzecie wyrażenie składowe ustawia \texttt{y} na 3.
+    \item Czwarte wyrażenie składowe ustawia \texttt{y} na 4.
+\end{enumerate}
+
+Wyrażenie 4 zmieniło \texttt{y}, jednak nie zmieniło \texttt{x}. Stąd patrzymy na wyrażenie 3, jednak ono nie zmieniło \texttt{x}, a jedynie \texttt{y}. Ignorujemy jednak zmienę, \texttt{y}, gdyż mamy już odpowiednią zmianę stanu dla \texttt{y}. Patrzymy na wyrażenie 2, które zmieniło \texttt{x}, stąd zapamiętujemy zmianę stanu dla \texttt{x}. Następnie patrzymy na wyrażenie 1, tkóre zmieniło \texttt{x}, ale zmianę dla \texttt{x} już mamy, więc ignorujemy tę zmianę.
+
+W taki sposób otrzymujemy stan końcowy, gdzie \texttt{x} wynosi 2, a \texttt{y} wynosi 4.
+
+Jeżeli któreś z wyrażeń składowych wyrażenia tego samego stanu kończy się wynikiem innym \textit{unit} (patrz: \ref{func:result} Wynik funkcji), to wykonywanie wyrażeń się zakończy tak, jakby dalszych wyrażeń nie było. Na przykład:
+
+\begin{lstlisting}
+(int x 0)
+(int x (+ x 1)) ; (+ x 2) ; (int x (+ x 3))
+\end{lstlisting}
+
+Wyrażenie \texttt{(+ x 2)} kończy się wynikiem 2, a w stanie końcowym \texttt{x} wynosi 1. Ostatnia składowa wyrażenie tego samego stanu nie miała możliwości się wykonać, ponieważ wcześniejsze wyrażenie zakończyło się wynikiem innym niż \textit{unit}.
+
+Wynikiem wyrażenia tego samego stanu jest \textit{unit} lub wynik pierwszego wyrażenie, który nie jest \textit{unit}.
+
+Na przykład, poniższe wyrażenie tego samego stanu będzie miało wartość \textit{unit}:
+
+\begin{lstlisting}
+(int x 0)
+(int x (+ x 1)) ; (int x (+ x 1)) ; (int x (+ x 1))
+\end{lstlisting}
+
+Z drugiej strony, wartość poniższego wyrażenia tego samego stanu wynosi 2:
+
+\begin{lstlisting}
+(int x 0)
+(int x (+ x 1)) ; (+ x 2) ; (int x (+ x 3))
+\end{lstlisting}
+
+\subsection{Transakcje}\label{trans}
+
+W języku Baalbolge znajdziemy transakcje, które są w stanie zamknąć w sobie pewną grupę wyrażeń. Jeżeli wewnątrz transakcji wystąpi błąd, nie jest on propagowany na cały program, wszystkie zmiany do stanu nie zostają nanoszone i program kontynuuje pracę. Z koleji wszystkie błędy statycznej analizy kodu poza transakcją nie wpływają na wykonanie. Ponadto, możemy ręcznie wykonać rollback transakcji.
+
+W przypadku zwracanego wyniku, transakcja zachowuje się jak funkcja. Jeżeli któreś z wyrażeń składowych zwróci wartość inną niż \textit{unit}, to transakcja kończy się sukcesem, dalsze wyrażenia nie są obliczane i nanoszone są zmiany do stanu.
+
+Jeżeli żadne z wyrażeń nie zwróci wartości innej niż \textit{unit}, to gdy dojdziemy do końca transakcji, transakcja jest commitowana i zwracany jest \textit{unit}.
+
+Jeżeli wykonamy ręczny rollback lub rollback spowodowany błędem, to transakcja zwróci \textit{unit}.
+
+\subsubsection{Błąd przy braku transakcji}
+
+Poniższy kod się nie wykona, ponieważ mamy niezgodność typów przy dodawaniu (\texttt{bool} i \texttt{int}):
+
+\begin{lstlisting}
+(int x 0)
+(while True
+  (int x (+ x 1)))
+(bool y True)
+(y (+ x y))
+\end{lstlisting}
+
+\subsubsection{Brak błędu przy transakcji przed błędem}
+
+Poniższy kod wykona się i zapętli. Choć powinniśmy dostać błąd statycznych typów z dodawania \texttt{int} i \texttt{bool}, to najpierw wykona się transakcja, która ma nieskończoną pętlę \texttt{while}.
+
+\begin{lstlisting}
+(int x 0)
+(transaction
+  (while True
+    (int x (+ x 1))))
+(bool y True)
+(y (+ x y))
+\end{lstlisting}
+
+\subsubsection{Błąd przed transakcją}
+
+Poniższy kod zakończy się błędem. Choć mamy transakcję, to pierwszeństwo ma kod wcześniejszy, który rzuca błędem, więc transakcja się nie wykona.
+
+\begin{lstlisting}
+(int x 0)
+(bool y True)
+(y (+ x y))
+(transaction
+  (while True
+    (int x (+ x 1))))
+\end{lstlisting}
+
+\subsubsection{Brak błędu przy transakcji okalającej błąd statyczny}
+
+Wewnątrz transakcji dostaniemy błąd statycznego sprawdzania typów, jednak dzięki transakcji zostanie on ignorowany i transakcja się nie wykona, a w jej miejsce wstawiony zostanie \textit{unit}.
+
+\begin{lstlisting}
+(int x 0)
+(while True
+  (int x (+ x 1)))
+(transaction
+  (bool y True)
+  (bool y (+ x y)))
+\end{lstlisting}
+
+\subsubsection{Brak błędu przy transakcji okalającej błąd runtime}
+
+W poniższym kodzie z uwagi na użycie \texttt{var}, nie mamy statycznego sprawdzania typów. W runtime dostaniemy błąd przy próbie dodawania \texttt{int} i \texttt{bool}. Jednak dzięki transakcji, błąd zostanie zatrzymany i program będzie się dalej wykonywał.
+
+\begin{lstlisting}
+(var x 0)
+(transaction
+  (var y True)
+  (var y (+ x y)))
+(while True
+  (x (+ x 1)))
+\end{lstlisting}
+
+\subsubsection{Ręczny rollback}
+
+Po wykonaniu poniższego kodu, w stanie \texttt{x} wynosi 0, poniważ zmiana stanu została cofnięta.
+
+\begin{lstlisting}
+(int x 0)
+(transaction
+  (int x (+ x 1))
+  (rollback))
+\end{lstlisting}
+
+\pagebreak
+
+\section{Przykładowe programy}
+
+\subsection{Logiczny OR}
+
+\begin{lstlisting}
+(bool or [(bool arg1) (bool arg2)]
+  (if arg1
+    True
+    arg2))
+\end{lstlisting}
+
+\subsection{Większy lub równy}
+
+\begin{lstlisting}
+(bool >= [(int x) (int y)]
+  # Korzystamy z wczesniej zaimplementowanego or
+  (or (= x y) (> x y)))
+\end{lstlisting}
+
+\subsection{Ciągu Fibonacciego}
+
+\begin{lstlisting}
+(int fib [(int n)]
+  (int fib-rec [(int f1) (int f2) (int n)]
+    (if (= n 0)
+      f1
+      (fib-rec f2 (+ f1 f2) (- n 1))))
+  (fib-rec 0 1 n))
+
+(fib 42)
+\end{lstlisting}
+
+\subsection{Silnia}
+
+\begin{lstlisting}
+(int factorial [(int x)]
+  (int factorial-rec [(int x) (int acc)]
+    (if (> x 0)
+      (factorial-rec (- x 1) (* acc x))
+      acc))
+  (factorial-rec x 1))
+  
+(factorial 10)
+\end{lstlisting}
+
+\pagebreak
+
+\section{Tabelka funkcjonalności}
+
+Jako, że chcę, aby mój język łączyć elementy imperatywne z funkcyjnymi, to zamieszczam dwie tabelki. Na samym końcu dopisuję jeszcze elementy mojego języka, którego nie było w tabelkach.
+
+\begin{itemize}
+    \item \checkmark oznacza, że zrealizuję dany element
+    \item $\pm$ oznacza, że częściowo zrealizuję dany element
+    \item ? oznacza, że zastanawiam się jeszcze nad zrealizowaniem elementu
+    \item puste miejsce oznacza, że nie zrealizuję danego elementu
+\end{itemize}
+
+\subsection{Tabelka języka imperatywnego}
+
+\begin{center}
+\begin{tabular}{ c c l }
+  \multicolumn{3}{c}{Na 15 punktów} \\
+  $\pm$ & 01 & (trzy typy) \\
+  \checkmark & 02 & (literały, arytmetyka, porównania) \\
+  \checkmark & 03 & (zmienne, przypisanie) \\
+  ? & 04 & (print) \\
+  \checkmark & 05 & (while, if) \\
+  \checkmark & 06 & (funkcje lub procedury, rekurencja) \\
+  $\pm$ & 07 & (\sout{przez zmienną} / przez wartość / \sout{in/out}) \\
+   & 08 & (zmienne read-only i pętla for) \\
+  \hline
+  \multicolumn{3}{c}{Na 20 punktów} \\
+  \checkmark & 09 & (przesłanianie i statyczne wiązanie) \\
+  \checkmark & 10 & (obsługa błędów wykonania) \\
+  \checkmark & 11 & (funkcje zwracające wartość) \\
+  \hline
+  \multicolumn{3}{c}{Na 30 punktów} \\
+  \checkmark & 12 & (4) (statyczne typowanie) \\
+  \checkmark & 13 & (2) (funkcje zagnieżdżone ze statycznym wiązaniem) \\
+  \checkmark & 14 & (1/\sout{2}) (\sout{rekordy}/listy/\sout{tablice}/\sout{tablice wielowymiarowe}) \\
+   & 15 & (2) (krotki z przypisaniem) \\
+  ? & 16 & (1) (break, continue) \\
+  \checkmark & 17 & (4) (funkcje wyższego rzędu, anonimowe, domknięcia) \\
+   & 18 & (3) (generatory) \\
+\end{tabular}
+\end{center}
+
+\subsection{Tabelka języka funkcyjnego}
+
+\begin{center}
+\begin{tabular}{ c c l }
+  \multicolumn{3}{c}{Na 20 punktów:} \\
+  \checkmark & 01 & (dwa typy) \\
+  \checkmark & 02 & (arytmetyka, porównania) \\
+  \checkmark & 03 & (if) \\
+  \checkmark & 04 & (funkcje wieloargumentowe, rekurencja) \\
+  \checkmark & 05 & (funkcje anonimowe i wyższego rzędu, częściowa aplikacja) \\
+  \checkmark & 06 & (obsługa błędów wykonania) \\
+  \checkmark & 07 & (statyczne wiązanie identyfikatorów) \\
+  \multicolumn{3}{c}{Listy:} \\
+   & 08 & (z pattern matchingiem) \\
+   & 09 & (z empty, head, tail) \\
+  \checkmark & 10 & (lukier) \\
+  \hline
+  \multicolumn{3}{c}{Na 25 punktów} \\ 
+  \checkmark & 11 & (listy dowolnego typu, zagnieżdżone i listy funkcji) \\
+   & 12 & (proste typy algebraiczne z jednopoziomowym pattern matchingiem) \\
+  \checkmark & 13 & (statyczne typowanie) \\
+  \hline
+  \multicolumn{3}{c}{Na 30 punktów} \\
+   & 14 & (ogólne polimorficzne i rekurencyjne typy algebraiczne) \\
+   & 15 & (zagnieżdżony pattern matching) \\
+  \hline
+  \multicolumn{3}{c}{Bonus} \\
+   & 16 & (typy polimorficzne z algorytmem rekonstrukcji typów) \\
+   & 17 & (sprawdzenie kompletności pattern matchingu) \\
+\end{tabular}
+\end{center}
+
+\subsection{Moje rozszerzenia}
+
+Ponadto, swój interpreter chciałbym rozszerzyć o niewymienione powyżej elementy:
+
+\begin{itemize}
+    \item Typ \texttt{var}, sekcja \ref{type:var}
+    \item Wrażenie tego samego stanu, sekcja \ref{same-state}
+    \item Zwracanie pierwszej wartości wylioczonej w funkcji, sekcja \ref{func:result}
+    \item Transakcje, sekcja \ref{trans} -- tutaj może mi nie starczyć czasu
+\end{itemize}
+
+\subsection{Suma punktów}
+
+Mam nadzieję, że wszystkie feature'y pozwolą mi uzyskać 30 punktów za interpreter.
+
+\end{document}
