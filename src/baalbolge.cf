@@ -38,5 +38,5 @@ token Var ((letter | '_' | '\'' | [".+-/*%?<>=:^"]) (letter | digit | '_' | '\''
 comment "#" ;
 separator Exp " ";
 separator Arg " " ;
-separator nonempty SameState ";" ;
+terminator nonempty SameState ";" ;
 entrypoints Exps ;
