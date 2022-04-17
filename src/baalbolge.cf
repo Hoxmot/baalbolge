@@ -12,7 +12,7 @@ EUnit.     Exp ::= "()" ;
 BTrue.  Bool ::= "True" ;
 BFalse. Bool ::= "False" ;
 
-LList. List ::= "[" [Exp] "]" ;
+LList. List ::= "<" [Exp] ">" ;
 
 SState. SameState ::= Exp ;
 
