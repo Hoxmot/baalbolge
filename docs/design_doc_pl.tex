@@ -38,7 +38,6 @@ EInt.      Exp ::= Integer ;
 EBool.     Exp ::= Bool ;
 EFunc.     Exp ::= "(" Var [Exp] ")" ;
 EInternal. Exp ::= "(" InternalFunc ")" ;
-EConc.     Exp ::= [SameState] ;
 EList.     Exp ::= List ;
 EVar.      Exp ::= Var ;
 EUnit.     Exp ::= "()" ;
@@ -46,16 +45,18 @@ EUnit.     Exp ::= "()" ;
 BTrue.  Bool ::= "True" ;
 BFalse. Bool ::= "False" ;
 
-LList. List ::= "[" [Exp] "]" ;
-
-SState. SameState ::= Exp ;
+LList. List ::= "<" [Exp] ">" ;
 
 IFuncDecl. InternalFunc ::= Type Var "[" ArgsList "]" [Exp] ;
+ILambda.   InternalFunc ::= Type "[" ArgsList "]" [Exp] ;
 IVarDecl.  InternalFunc ::= Type Var Exp ;
 ITransact. InternalFunc ::= "transaction" [Exp] ;
 IIf.       InternalFunc ::= "if" Exp Exp Exp ;
 IWhile.    InternalFunc ::= "while" Exp ;
 IWhen.     InternalFunc ::= "when" Exp Exp ;
+IConc.     InternalFunc ::= ";" [SameState] ;
+
+SState. SameState ::= Exp ;
 
 AList. ArgsList ::= [Arg] ;
 
@@ -64,18 +65,16 @@ AArg. Arg ::= "(" Type Var ")" ;
 TInt.  Type ::= "int" ;
 TBool. Type ::= "bool" ;
 TVar.  Type ::= "var" ;
-TList. Type ::= "[" Type "]" ;
+TList. Type ::= "<" Type ">" ;
 TUnit. Type ::= "$" ;
 
-token Var (
-  (letter | '_' | '\'' | [".+-/*%?<>=:^"])
-  (letter | digit | '_' | '\'' | [".+-/*%?<>=:^"])*
-) ;
-
+token Var
+  ((letter | '_' | '\'' | [".+-/*%?<>=:^;"])
+  (letter | digit | '_' | '\'' | [".+-/*%?<>=:^;"])*) ;
 comment "#" ;
 separator Exp " ";
 separator Arg " " ;
-separator nonempty SameState ";" ;
+terminator SameState ";" ;
 entrypoints Exps ;
 
 \end{lstlisting}
@@ -114,7 +113,7 @@ Dla zwykłych typów, stosowane będzie statyczne typowanie. Niestety, z uwagi n
 
 Listy można dowolnie zagnieżdżać. Gdy korzystamy z typu danych \texttt{var}, lista może być dowolnie zgnieżdżona. W szczególności, zmienna typu \texttt{var} może być listą.
 
-Listy tworzymy poprzez wstawienie wyrażeń oddzielonych spacjami do pomiędzy nawiasy kwadratowe, na przykład: \texttt{[1 2 3]}.
+Listy tworzymy poprzez wstawienie wyrażeń oddzielonych spacjami do pomiędzy nawiasy kwadratowe, na przykład: \texttt{<1 2 3>}.
 
 \subsection{Wbudowane operacje na wartościach}
 
@@ -139,7 +138,7 @@ Funkcje wywołujemy poprzedni wpisanie w nawiasach najpierw nazwy funkcji, a nas
 
 \begin{lstlisting}
 (+ b (+ 3 4))
-(func 7 True a [1 2 3])
+(func 7 True a <1 2 3>)
 \end{lstlisting}
 
 \subsection{Funkcje specjalne}\label{func:special}
@@ -155,6 +154,7 @@ Wbudowane funkcje specjalne to:
     \item \texttt{if}
     \item \texttt{while}
     \item \texttt{when}
+    \item Wyrażenia tego samego stanu; Patrz: \ref{same-state} Wyrażenia tego samego stanu
     \item Transakcja; Patrz: \ref{trans} Transakcje
 \end{itemize}
 
@@ -162,7 +162,7 @@ Wbudowane funkcje specjalne to:
 
 Zmienne deklarujemy w nawiasach, najpierw podajemy interesujący nas typ, następnie nazwę zmiennej, a na końcu wyrażenie, którego wynik będzie wynikiem zmiennej. Wyrażenie obliczane jest w momencie deklaracji zmiennej.
 
-Nazwa zmiennej może zawierać litery, cyfry oraz znaki: "\texttt{.+-/*\%?<>=:\^}" (cudzysłów nie jest wśród tych znaków). Nazwa zmiennej nie może się jednak zaczynać od cyfry.
+Nazwa zmiennej może zawierać litery, cyfry oraz znaki: "\texttt{.+-/*\%?<>=:;\^}" (cudzysłów nie jest wśród tych znaków). Nazwa zmiennej nie może się jednak zaczynać od cyfry.
 
 Przykładowe deklaracje zmiennych:
 
@@ -170,9 +170,9 @@ Przykładowe deklaracje zmiennych:
 (int a 1)
 (bool b? True)
 (int c (+ a 1))
-([int] li [1 2 3])
-([var] lv [5 False])
-(var v [5 False])
+(<int> li <1 2 3>)
+(<var> lv <5 False>)
+(var v <5 False>)
 \end{lstlisting}
 
 Wynikiem deklaracji zmiennej jest \textit{unit}.
@@ -264,7 +264,7 @@ Na przykład:
 
 \begin{lstlisting}
 (int x 0)
-(int x (+ x 1)) ; (int x (+ x 1)) ; (int x (+ x 1))
+(; (int x (+ x 1)) ; (int x (+ x 1)) ; (int x (+ x 1)) ;)
 \end{lstlisting}
 
 Po wykonaniu powyższego kodu, w naszym stanie \texttt{x} wynosi 1. Wynika to z tego, że każde z wywołań \texttt{(int x (+ x 1))} wykonywało się w takim stanie początkowym, gdzie \texttt{x} wynosił 0.
@@ -273,7 +273,7 @@ Jeżeli wyrażenia będą zmieniały stan na różne sposóby, to stan końcowy 
 
 \begin{lstlisting}
 (int x 0)
-(int x (+ x 1)) ; (int x (+ x 2)) ; (int x (+ x 3))
+(; (int x (+ x 1)) ; (int x (+ x 2)) ; (int x (+ x 3)) ;)
 \end{lstlisting}
 
 Po wykonaniu powyższego kodu, w naszym stanie \texttt{x} wynosi 3. Wynika to z faktu, że ostatnie wyrażenie ustawiło taką wartość dla \texttt{x}.
@@ -283,7 +283,7 @@ Jeżeli zmieniamy różne elementy stanu (np. różne zmienne), to stan końcowy
 \begin{lstlisting}
 (int x 0)
 (int y 0)
-(int x (+ x 1)) ; (int x (+ x 2)) ; (int y (+ y 3)) ; (int y (+ y 4))
+(; (int x (+ x 1)) ; (int x (+ x 2)) ; (int y (+ y 3)) ; (int y (+ y 4)) ;)
 \end{lstlisting}
 
 Po wykonaniu powyższego kodu, w naszym stanie \texttt{x} wynosi 2, a \texttt{y} wynosi 4.

@@ -4,7 +4,6 @@ EInt.      Exp ::= Integer ;
 EBool.     Exp ::= Bool ;
 EFunc.     Exp ::= "(" Var [Exp] ")" ;
 EInternal. Exp ::= "(" InternalFunc ")" ;
-EConc.     Exp ::= "(;" [SameState] ")" ;
 EList.     Exp ::= List ;
 EVar.      Exp ::= Var ;
 EUnit.     Exp ::= "()" ;
@@ -14,8 +13,6 @@ BFalse. Bool ::= "False" ;
 
 LList. List ::= "<" [Exp] ">" ;
 
-SState. SameState ::= Exp ;
-
 IFuncDecl. InternalFunc ::= Type Var "[" ArgsList "]" [Exp] ;
 ILambda.   InternalFunc ::= Type "[" ArgsList "]" [Exp] ;
 IVarDecl.  InternalFunc ::= Type Var Exp ;
@@ -23,6 +20,9 @@ ITransact. InternalFunc ::= "transaction" [Exp] ;
 IIf.       InternalFunc ::= "if" Exp Exp Exp ;
 IWhile.    InternalFunc ::= "while" Exp ;
 IWhen.     InternalFunc ::= "when" Exp Exp ;
+IConc.     InternalFunc ::= ";" [SameState] ;
+
+SState. SameState ::= Exp ;
 
 AList. ArgsList ::= [Arg] ;
 
@@ -31,12 +31,12 @@ AArg. Arg ::= "(" Type Var ")" ;
 TInt.  Type ::= "int" ;
 TBool. Type ::= "bool" ;
 TVar.  Type ::= "var" ;
-TList. Type ::= "[" Type "]" ;
+TList. Type ::= "<" Type ">" ;
 TUnit. Type ::= "$" ;
 
-token Var ((letter | '_' | '\'' | [".+-/*%?<>=:^"]) (letter | digit | '_' | '\'' | [".+-/*%?<>=:^"])*) ;
+token Var ((letter | '_' | '\'' | [".+-/*%?<>=:^;"]) (letter | digit | '_' | '\'' | [".+-/*%?<>=:^;"])*) ;
 comment "#" ;
 separator Exp " ";
 separator Arg " " ;
-terminator nonempty SameState ";" ;
+terminator SameState ";" ;
 entrypoints Exps ;
