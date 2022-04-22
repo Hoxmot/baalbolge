@@ -9,3 +9,9 @@ build_test :
 # TODO
 test :
 	true
+
+# TODO
+clean :
+	true
+
+# EOF
