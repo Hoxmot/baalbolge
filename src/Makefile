@@ -35,7 +35,7 @@ Baalbolge/Abs.hs Baalbolge/Lex.x Baalbolge/Par.y Baalbolge/Print.hs Baalbolge/Te
 	${ALEX} ${ALEX_OPTS} $<
 
 Baalbolge/Test : Baalbolge/Abs.hs Baalbolge/Lex.hs Baalbolge/Par.hs Baalbolge/Print.hs Baalbolge/Test.hs
-	${GHC} ${GHC_OPTS} $@
+	${GHC} ${GHC_OPTS} -o ${DEST}parser $@
 
 # Rules for cleaning generated files.
 
