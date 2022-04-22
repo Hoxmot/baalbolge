@@ -18,9 +18,12 @@ jobs:
       with:
         ghc-version: '8.8.4'
         cabal-version: '3.0.0.0'
+
+    - name: Setup cabal path
+      run: echo "${cabal-path}" >> $GITHUB_PATH
       
     - name: Install build dependencies
-      run: cabal update && cabal install BNFC
+      run: cabal update && cabal install BNFC alex happy
       
     - name: Build
       run: make build
