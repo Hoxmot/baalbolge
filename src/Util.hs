@@ -6,11 +6,17 @@ module Util
       , checkParentheses
       , showTree
       , readCommand
+
+      -- * Not implemented handling
+      , notImplemented
+      , notImplementedError
   ) where
 
 import           Baalbolge.Print (Print, printTree)
+import           System.Exit     (exitFailure)
 
--- | A command for controlling the interpeter in the interactive mode. 
+
+-- | A command for controlling the interpeter in the interactive mode.
 data Command = Exit | Help | Parse
   deriving (Show)
 
@@ -68,3 +74,9 @@ showTree :: (Show a, Print a) => a -> IO ()
 showTree tree = do
     putStrLn $ "\n[Abstract Syntax]\n\n" ++ show tree
     putStrLn $ "\n[Linearized tree]\n\n" ++ printTree tree
+
+notImplemented :: IO()
+notImplemented = putStrLn "Not yet implemented..."
+
+notImplementedError :: IO()
+notImplementedError = notImplemented >> putStrLn "Quitting..." >> exitFailure

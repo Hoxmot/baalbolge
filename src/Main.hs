@@ -1,7 +1,8 @@
 import           System.Environment (getArgs)
 import           System.Exit        (exitFailure, exitSuccess)
 
-import qualified Util               (checkParentheses, readCommand, showTree)
+import qualified Util               (checkParentheses, notImplemented,
+                                     readCommand, showTree)
 
 import           Baalbolge.Abs      ()
 import           Baalbolge.Lex      (Token, mkPosToken)
@@ -9,6 +10,7 @@ import           Baalbolge.Par      (myLexer, pExps)
 import           Baalbolge.Print    (Print)
 import           Baalbolge.Skel     ()
 import           Util               (Command (..))
+
 
 type Err        = Either String
 type ParseFun a = [Token] -> Err a
@@ -22,7 +24,7 @@ readStdIn line c = do
     case Util.readCommand currentLine of
       Exit  -> exitSuccess
       -- TODO: #17
-      Help  -> exitSuccess
+      Help  -> Util.notImplemented
       Parse -> continueParse line currentLine c
 
 continueParse :: String -> String -> Int -> IO()
@@ -30,7 +32,7 @@ continueParse line currentLine c =
     if nc == 0
         then run pExps allLines
         else readStdIn allLines nc
-  where 
+  where
     nc = Util.checkParentheses currentLine c
     allLines = line ++ '\n':currentLine
 
