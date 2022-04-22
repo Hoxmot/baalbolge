@@ -1,37 +1,38 @@
-module Main
-  where
-
 import           System.Environment (getArgs)
-import           System.Exit        (exitFailure)
+import           System.Exit        (exitFailure, exitSuccess)
+
+import qualified Util               (checkParentheses, readCommand, showTree)
 
 import           Baalbolge.Abs      ()
 import           Baalbolge.Lex      (Token, mkPosToken)
 import           Baalbolge.Par      (myLexer, pExps)
-import           Baalbolge.Print    (Print, printTree)
+import           Baalbolge.Print    (Print)
 import           Baalbolge.Skel     ()
+import           Util               (Command (..))
 
 type Err        = Either String
 type ParseFun a = [Token] -> Err a
 
-interactiveInterpreter :: IO ()
-interactiveInterpreter = readStdIn "" 0 >> interactiveInterpreter
+interactiveMode :: IO ()
+interactiveMode = readStdIn "" 0 >> interactiveMode
 
 readStdIn :: String -> Int -> IO()
 readStdIn line c = do
     currentLine <- getLine
-    let nc = checkParentheses currentLine c
-        allLine = line ++ '\n':currentLine
-      in
-        if checkParentheses currentLine c == 0
-            then run pExps allLine
-            else readStdIn allLine nc
+    case Util.readCommand currentLine of
+      Exit  -> exitSuccess
+      -- TODO: #17
+      Help  -> exitSuccess
+      Parse -> continueParse line currentLine c
 
-checkParentheses :: String -> Int -> Int
-checkParentheses (h:t) c
-    | h == '(' = checkParentheses t (c + 1)
-    | h == ')' = checkParentheses t (c - 1)
-    | otherwise = checkParentheses t c
-checkParentheses [] c = c
+continueParse :: String -> String -> Int -> IO()
+continueParse line currentLine c =
+    if nc == 0
+        then run pExps allLines
+        else readStdIn allLines nc
+  where 
+    nc = Util.checkParentheses currentLine c
+    allLines = line ++ '\n':currentLine
 
 run :: (Print a, Show a) => ParseFun a -> String -> IO ()
 run p s =
@@ -44,22 +45,17 @@ run p s =
         exitFailure
       Right tree -> do
         putStrLn "\nParse Successful!"
-        showTree tree
+        Util.showTree tree
   where
     ts = myLexer s
     showPosToken ((l,c),t) = concat [ show l, ":", show c, "\t", show t ]
-
-showTree :: (Show a, Print a) => a -> IO ()
-showTree tree = do
-    putStrLn $ "\n[Abstract Syntax]\n\n" ++ show tree
-    putStrLn $ "\n[Linearized tree]\n\n" ++ printTree tree
 
 usage :: IO ()
 usage = do
     putStrLn $ unlines
         [ "usage: baalbolge [arguments]"
         , "  --help          Display this help message."
-        , "  (no arguments)  Interpret stdin verbosely."
+        , "  (no arguments)  Interactive mode."
         ]
 
 main :: IO()
@@ -67,5 +63,5 @@ main = do
     args <- getArgs
     case args of
       ["--help"] -> usage
-      []         -> interactiveInterpreter
+      []         -> interactiveMode
       _          -> usage
