@@ -19,8 +19,14 @@ jobs:
         ghc-version: '8.8.4'
         cabal-version: '3.0.0.0'
       
+    - name: Install build dependencies
+      run: cabal update && cabal install BNFC
+      
     - name: Build
       run: make build
+
+    - name: Install test dependencies
+      run: cabal update && cabal install doctest
 
     - name: Doctest
       run: make doctest
