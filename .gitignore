@@ -31,3 +31,6 @@ cabal.project.local~
 
 # bnfc generated files
 src/Baalbolge
+
+# build folder
+build
