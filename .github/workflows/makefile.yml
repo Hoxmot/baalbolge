@@ -20,19 +20,10 @@ jobs:
         cabal-version: '3.0.0.0'
 
     - name: Setup cabal path
-      run: echo "${cabal-path}" && echo "${cabal-path}" >> $GITHUB_PATH
-
-    - name: Print Path
-      run: echo $PATH
+      run: echo "$HOME/.cabal/bin" >> $GITHUB_PATH
 
     - name: Install build dependencies
       run: cabal update && cabal install BNFC alex happy
-      
-    - name: Print Path 2
-      run: echo $PATH
-
-    - name: Find cabal file
-      run: ls -lah $HOME/.cabal/bin
 
     - name: Build
       run: make build
