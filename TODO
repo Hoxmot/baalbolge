@@ -1,4 +1,12 @@
 Working Interpreter:
-    ☐ Reading from standard input
+    Reading from standard input:
+        ✔ Implement @done(22-04-22 21:15)
+        ☐ Add tests
+        ☐ Add documentation
     ☐ Reading from file
     ☐ Static typing
+
+Interpreter Review:
+
+Nice to Have:
+    ☐ Nice message at the end of STDIN

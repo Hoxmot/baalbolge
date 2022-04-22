@@ -20,7 +20,7 @@ all : dir build Baalbolge/Test
 dir : 
 	mkdir -p ${DEST}
 
-build : Main.hs
+build : Main.hs Baalbolge/Abs.hs Baalbolge/Lex.hs Baalbolge/Par.hs Baalbolge/Print.hs Baalbolge/Test.hs
 	${GHC} ${GHC_OPTS} Main.hs -o ${DEST}baalbolge
 
 # Rules for building the parser.
