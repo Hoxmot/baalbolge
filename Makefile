@@ -1,12 +1,14 @@
-.PHONY : all build testing clean
+.PHONY : all build doctest testing clean
 
-all : build testing
+all : build doctest testing
 
 build : src
 	make -C src build
 
-testing : test
+doctest : build
 	make -C src test
+
+testing : test
 	make -C test
 
 clean :
