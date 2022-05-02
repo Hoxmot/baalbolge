@@ -1,19 +1,21 @@
-import           System.Environment (getArgs)
+import           System.Environment (getArgs, withArgs)
 import           System.Exit        (exitFailure, exitSuccess)
 
+import qualified Baalbolge.Skel     (Result)
+import qualified TypeChecker        (checkTypes)
 import qualified Util               (checkParentheses, notImplemented,
                                      readCommand, showTree)
 
-import           Baalbolge.Abs      ()
+import           Baalbolge.Abs      (Exps)
 import           Baalbolge.Lex      (Token, mkPosToken)
 import           Baalbolge.Par      (myLexer, pExps)
 import           Baalbolge.Print    (Print)
-import           Baalbolge.Skel     ()
 import           Util               (Command (..))
 
 
 type Err        = Either String
 type ParseFun a = [Token] -> Err a
+type Result     = Exps
 
 fileMode :: [String] -> IO ()
 fileMode = mapM_ readFileIn
@@ -44,19 +46,21 @@ continueParse line currentLine c =
 
 run :: String -> IO ()
 run s =
-    case pExps ts of
+    case interpret s of
       Left err -> do
-        putStrLn "\nParse              Failed...\n"
-        putStrLn "Tokens:"
-        mapM_ (putStrLn . showPosToken . mkPosToken) ts
         putStrLn err
         exitFailure
       Right tree -> do
-        putStrLn "\nParse Successful!"
         Util.showTree tree
   where
-    ts = myLexer s
     showPosToken ((l,c),t) = concat [ show l, ":", show c, "\t", show t ]
+
+interpret :: String -> Err Result
+interpret s = do
+    exps <- pExps tokens
+    TypeChecker.checkTypes exps
+  where
+    tokens = myLexer s
 
 usage :: IO ()
 usage = do
