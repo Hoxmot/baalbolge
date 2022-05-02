@@ -15,10 +15,16 @@ import           Util               (Command (..))
 type Err        = Either String
 type ParseFun a = [Token] -> Err a
 
+fileMode :: [String] -> IO ()
+fileMode = mapM_ readFileIn
+
+readFileIn :: FilePath -> IO ()
+readFileIn f = putStrLn f >> readFile f >>= run
+
 interactiveMode :: IO ()
 interactiveMode = readStdIn "" 0 >> interactiveMode
 
-readStdIn :: String -> Int -> IO()
+readStdIn :: String -> Int -> IO ()
 readStdIn line c = do
     currentLine <- getLine
     case Util.readCommand currentLine of
@@ -27,18 +33,18 @@ readStdIn line c = do
       Help  -> Util.notImplemented
       Parse -> continueParse line currentLine c
 
-continueParse :: String -> String -> Int -> IO()
+continueParse :: String -> String -> Int -> IO ()
 continueParse line currentLine c =
     if nc == 0
-        then run pExps allLines
+        then run allLines
         else readStdIn allLines nc
   where
     nc = Util.checkParentheses currentLine c
     allLines = line ++ '\n':currentLine
 
-run :: (Print a, Show a) => ParseFun a -> String -> IO ()
-run p s =
-    case p ts of
+run :: String -> IO ()
+run s =
+    case pExps ts of
       Left err -> do
         putStrLn "\nParse              Failed...\n"
         putStrLn "Tokens:"
@@ -58,12 +64,13 @@ usage = do
         [ "usage: baalbolge [arguments]"
         , "  --help          Display this help message."
         , "  (no arguments)  Interactive mode."
+        , "  [files]         Reads and interprets the code from files."
         ]
 
-main :: IO()
+main :: IO ()
 main = do
     args <- getArgs
     case args of
       ["--help"] -> usage
       []         -> interactiveMode
-      _          -> usage
+      fs         -> fileMode fs
