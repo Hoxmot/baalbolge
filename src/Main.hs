@@ -1,17 +1,13 @@
-import           System.Environment (getArgs, withArgs)
+import           System.Environment (getArgs)
 import           System.Exit        (exitFailure, exitSuccess)
 import           System.IO          (hFlush, stdout)
 
-import qualified Baalbolge.Skel     (Result)
 import qualified Interpreter        (interpret)
 import qualified TypeChecker        (checkTypes)
 import qualified Util               (checkParentheses, exit, notImplemented,
-                                     readCommand, showTree)
+                                     readCommand)
 
-import           Baalbolge.Abs      (Exps)
-import           Baalbolge.Lex      (Token, mkPosToken)
 import           Baalbolge.Par      (myLexer, pExps)
-import           Baalbolge.Print    (Print)
 import           Types
 import           Util               (Command (..), printResponse)
 
@@ -62,9 +58,9 @@ runInteractive s =
 
 run :: String -> Err Result
 run s = do
-    exps <- pExps $ myLexer s
-    exps <- TypeChecker.checkTypes exps
-    Interpreter.interpret exps
+    e1 <- pExps $ myLexer s
+    e2 <- TypeChecker.checkTypes e1
+    Interpreter.interpret e2
 
 usage :: IO ()
 usage = do
