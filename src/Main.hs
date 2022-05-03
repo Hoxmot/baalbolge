@@ -1,5 +1,6 @@
 import           System.Environment (getArgs, withArgs)
 import           System.Exit        (exitFailure, exitSuccess)
+import           System.IO          (hFlush, stdout)
 
 import qualified Baalbolge.Skel     (Result)
 import qualified TypeChecker        (checkTypes)
@@ -10,10 +11,10 @@ import           Baalbolge.Abs      (Exps)
 import           Baalbolge.Lex      (Token, mkPosToken)
 import           Baalbolge.Par      (myLexer, pExps)
 import           Baalbolge.Print    (Print)
+import           Types
 import           Util               (Command (..))
 
 
-type Err        = Either String
 type ParseFun a = [Token] -> Err a
 type Result     = Exps
 
@@ -28,6 +29,8 @@ interactiveMode = readStdIn "" 0 >> interactiveMode
 
 readStdIn :: String -> Int -> IO ()
 readStdIn line c = do
+    putStr ">> "
+    hFlush stdout
     currentLine <- getLine
     case Util.readCommand currentLine of
       Exit  -> exitSuccess
