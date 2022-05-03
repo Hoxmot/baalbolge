@@ -33,10 +33,7 @@ list. In Baalbolge, the first Exp to return a type other than Unit determines th
 Type of the whole list of Exps.
 -}
 expsMapper :: Type -> BG.Exp -> Err Type
-expsMapper TUnit e =
-    case checkTypesExp e of
-        Left err -> Left err
-        Right t  -> Right t
+expsMapper TUnit e = checkTypesExp e
 expsMapper t e =
     case checkTypesExp e of
         Left err -> Left err
