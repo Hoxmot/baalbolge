@@ -47,6 +47,9 @@ clean :
 	-rm -f Baalbolge/*.hi Baalbolge/*.o Baalbolge/*.log Baalbolge/*.aux Baalbolge/*.dvi
 	-rm -f Baalbolge/Abs.hs Baalbolge/Abs.hs.bak Baalbolge/ComposOp.hs Baalbolge/ComposOp.hs.bak Baalbolge/Doc.txt Baalbolge/Doc.txt.bak Baalbolge/ErrM.hs Baalbolge/ErrM.hs.bak Baalbolge/Layout.hs Baalbolge/Layout.hs.bak Baalbolge/Lex.x Baalbolge/Lex.x.bak Baalbolge/Par.y Baalbolge/Par.y.bak Baalbolge/Print.hs Baalbolge/Print.hs.bak Baalbolge/Skel.hs Baalbolge/Skel.hs.bak Baalbolge/Test.hs Baalbolge/Test.hs.bak Baalbolge/XML.hs Baalbolge/XML.hs.bak Baalbolge/AST.agda Baalbolge/AST.agda.bak Baalbolge/Parser.agda Baalbolge/Parser.agda.bak Baalbolge/IOLib.agda Baalbolge/IOLib.agda.bak Baalbolge/Main.agda Baalbolge/Main.agda.bak Baalbolge/baalbolge.dtd Baalbolge/baalbolge.dtd.bak Baalbolge/Test Baalbolge/Lex.hs Baalbolge/Par.hs Baalbolge/Par.info Baalbolge/ParData.hs 
 	-rmdir -p Baalbolge/
+	-rm -f .hie/Baalbolge/*.hie
+	-rm -f .hie/*.hie
+	-rmdir -p .hie/
 	-rm -f *.hi *.o *.log *.aux *.dvi
 	-rm -f ${DEST}baalbolge ${DEST}parser
 	-rmdir -p ${DEST}
