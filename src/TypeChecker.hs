@@ -7,6 +7,7 @@ import           Control.Monad (foldM)
 
 import qualified Baalbolge.Abs as BG
 
+import Baalbolge.Print
 import           Types
 
 {- | Checks the types in the given program. The check is pefrormed in a static manner.
@@ -46,17 +47,39 @@ $setup
 >>> let b = (BG.BTrue p)
 
 >>> checkTypesExp (BG.EUnit p)
-Right TUnit
+Right unit
 
 >>> checkTypesExp (BG.EInt p 42)
-Right TInt
+Right int
 
 >>> checkTypesExp (BG.EBool p b)
-Right TBool
+Right bool
 -}
 checkTypesExp :: BG.Exp -> Err Type
 checkTypesExp (BG.EUnit _) = return TUnit
 checkTypesExp (BG.EInt _ _) = return TInt
 checkTypesExp (BG.EBool _ _) = return TBool
-
+checkTypesExp (BG.EInternal _ d) = checkTypesIFunc d
 checkTypesExp e = Left $ "Checking types of exp: " ++ show e ++ " is not yet implemented"
+
+checkTypesIFunc :: BG.InternalFunc -> Err Type
+checkTypesIFunc iFunc@(BG.IVarDecl pos t v e) = do
+    tDecl <- checkTypesType t
+    tExp <- checkTypesExp e
+    if tDecl == tExp
+      then return TUnit
+      else typesError iFunc "VariableDeclaration" pos tDecl tExp
+checkTypesIFunc e = Left $ "Checking types for internal function: " ++ show e
+    ++ " is not yet implemented"
+
+checkTypesType :: BG.Type -> Err Type
+checkTypesType (BG.TInt _) = return TInt
+checkTypesType e = Left $ "Checking types of type: " ++ show e ++ " is not yet implemented"
+
+typesError :: Print a => a -> String -> BG.BNFC'Position -> Type -> Type -> Err Type
+typesError ex op (Just (line, col)) t1 t2 = Left $ "Types don't match! In operation '" ++ op
+    ++ "' in line " ++ show line ++ ", column " ++ show col ++ ":\n\tExpected '"
+    ++ show t1 ++ "' but got '" ++ show t2 ++ "'!\n(" ++ printTree ex ++ ")"
+typesError ex op Nothing t1 t2 = Left $ "Types don't match! In operation '" ++ op
+    ++ "' at undetermined position:\n\tExpected '" ++ show t1
+    ++ "' but got '" ++ show t2 ++ "'!\n(" ++ printTree ex ++ ")"
