@@ -1,28 +1,29 @@
-import           System.Environment (getArgs, withArgs)
+import           System.Environment (getArgs)
 import           System.Exit        (exitFailure, exitSuccess)
 import           System.IO          (hFlush, stdout)
 
-import qualified Baalbolge.Skel     (Result)
+import qualified Interpreter        (interpret)
 import qualified TypeChecker        (checkTypes)
-import qualified Util               (checkParentheses, notImplemented,
-                                     readCommand, showTree)
+import qualified Util               (checkParentheses, exit, notImplemented,
+                                     readCommand)
 
-import           Baalbolge.Abs      (Exps)
-import           Baalbolge.Lex      (Token, mkPosToken)
 import           Baalbolge.Par      (myLexer, pExps)
-import           Baalbolge.Print    (Print)
 import           Types
-import           Util               (Command (..))
+import           Util               (Command (..), printResponse)
 
 
-type ParseFun a = [Token] -> Err a
-type Result     = Exps
+fileMode :: FilePath -> IO ()
+fileMode f = putStrLn f >> readFile f >>= runFile
 
-fileMode :: [String] -> IO ()
-fileMode = mapM_ readFileIn
-
-readFileIn :: FilePath -> IO ()
-readFileIn f = putStrLn f >> readFile f >>= run
+runFile :: String -> IO ()
+runFile s =
+    case run s of
+      Left err -> do
+        putStrLn err
+        exitFailure
+      Right res -> do
+        Util.printResponse res
+        Util.exit res
 
 interactiveMode :: IO ()
 interactiveMode = readStdIn "" 0 >> interactiveMode
@@ -41,29 +42,25 @@ readStdIn line c = do
 continueParse :: String -> String -> Int -> IO ()
 continueParse line currentLine c =
     if nc == 0
-        then run allLines
+        then runInteractive allLines
         else readStdIn allLines nc
   where
     nc = Util.checkParentheses currentLine c
     allLines = line ++ '\n':currentLine
 
-run :: String -> IO ()
-run s =
-    case interpret s of
+runInteractive :: String -> IO ()
+runInteractive s =
+    case run s of
       Left err -> do
         putStrLn err
-        exitFailure
-      Right tree -> do
-        Util.showTree tree
-  where
-    showPosToken ((l,c),t) = concat [ show l, ":", show c, "\t", show t ]
+      Right res -> do
+        Util.printResponse res
 
-interpret :: String -> Err Result
-interpret s = do
-    exps <- pExps tokens
-    TypeChecker.checkTypes exps
-  where
-    tokens = myLexer s
+run :: String -> Err Result
+run s = do
+    e1 <- pExps $ myLexer s
+    e2 <- TypeChecker.checkTypes e1
+    Interpreter.interpret e2
 
 usage :: IO ()
 usage = do
@@ -71,7 +68,7 @@ usage = do
         [ "usage: baalbolge [arguments]"
         , "  --help          Display this help message."
         , "  (no arguments)  Interactive mode."
-        , "  [files]         Reads and interprets the code from files."
+        , "  FILE            Reads and interprets the code from file."
         ]
 
 main :: IO ()
@@ -80,4 +77,4 @@ main = do
     case args of
       ["--help"] -> usage
       []         -> interactiveMode
-      fs         -> fileMode fs
+      (h:_)      -> fileMode h

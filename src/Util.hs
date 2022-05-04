@@ -4,7 +4,9 @@ module Util
 
       -- * Util functions
       , checkParentheses
+      , exit
       , showTree
+      , printResponse
       , readCommand
 
       -- * Not implemented handling
@@ -12,8 +14,11 @@ module Util
       , notImplementedError
   ) where
 
+import           System.Exit     (ExitCode (ExitFailure), exitFailure,
+                                  exitSuccess, exitWith)
+
 import           Baalbolge.Print (Print, printTree)
-import           System.Exit     (exitFailure)
+import           Types
 
 
 -- | A command for controlling the interpeter in the interactive mode.
@@ -74,6 +79,20 @@ showTree :: (Show a, Print a) => a -> IO ()
 showTree tree = do
     putStrLn $ "\n[Abstract Syntax]\n\n" ++ show tree
     putStrLn $ "\n[Linearized tree]\n\n" ++ printTree tree
+
+printResponse :: Result -> IO ()
+printResponse RUnit     = putStrLn ""
+printResponse (RBool b) = print b
+printResponse (RInt v)  = print v
+
+exit :: Result -> IO ()
+exit RUnit = exitSuccess
+exit (RBool b)
+    | b = exitSuccess
+    | otherwise = exitFailure
+exit (RInt v)
+    | v == 0 = exitSuccess
+    | otherwise = exitWith (ExitFailure $ fromIntegral v)
 
 notImplemented :: IO()
 notImplemented = putStrLn "Not yet implemented..."
