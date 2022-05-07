@@ -82,7 +82,7 @@ checkTypesExp (BG.EUnit _) = return TUnit
 checkTypesExp (BG.EInt _ _) = return TInt
 checkTypesExp (BG.EBool _ _) = return TBool
 checkTypesExp var@(BG.EVar pos v) = checkTypesVar v `catchError` varNotFoundHandler var pos
-checkTypesExp (BG.EInternal _ d) = checkTypesIFunc d
+checkTypesExp (BG.EInternal _ int) = checkTypesIFunc int
 checkTypesExp e = throwError $ "Checking types of exp: " ++ show e ++ " is not yet implemented"
 
 {- | Checks the type for internal function usage in Baalbolge.
