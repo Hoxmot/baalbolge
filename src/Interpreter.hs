@@ -24,7 +24,7 @@ interpretExp (BG.EUnit _) = return RUnit
 interpretExp (BG.EInt _ v) = return $ RInt v
 interpretExp (BG.EBool _ b) = interpretBool b
 
-interpretExp e = Left $ "Checking types of exp: " ++ show e ++ " is not yet implemented"
+interpretExp e = Left $ "Interpretation of exp: " ++ show e ++ " is not yet implemented"
 
 interpretBool :: BG.Bool -> Err Result
 interpretBool (BG.BTrue _)  = return $ RBool True
