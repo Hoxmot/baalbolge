@@ -84,6 +84,8 @@ checkTypesExp (BG.EBool _ _) = return TBool
 checkTypesExp (BG.EInternal _ d) = checkTypesIFunc d
 checkTypesExp e = throwError $ "Checking types of exp: " ++ show e ++ " is not yet implemented"
 
+{- | Checks the type for internal function usage in Baalbolge.
+-}
 checkTypesIFunc :: BG.InternalFunc -> CheckTypeState
 checkTypesIFunc iFunc@(BG.IVarDecl pos t (BG.Var v) e) = do
     tDecl <- checkTypesType t
@@ -104,14 +106,25 @@ $setup
 
 >>> test $ checkTypesType (BG.TInt p)
 Right int
+
+>>> test $ checkTypesType (BG.TUnit p)
+Right unit
+
+>>> test $ checkTypesType (BG.TVar p)
+Right var
+
+>>> test $ checkTypesType (BG.TBool p)
+Right bool
 -}
 checkTypesType :: BG.Type -> CheckTypeState
 checkTypesType (BG.TInt _) = return TInt
+checkTypesType (BG.TUnit _) = return TUnit
+checkTypesType (BG.TVar _) = return TVar
+checkTypesType (BG.TBool _) = return TBool
 checkTypesType e = throwError $ "Checking types of type: " ++ show e
     ++ " is not yet implemented"
 
-{- | Creates a message about types error in the code.
--}
+-- | Creates a message about types error in the code.
 typesError :: Print a => a -> String -> BG.BNFC'Position -> Type -> Type -> String
 typesError ex op (Just (line, col)) t1 t2 = "Types don't match! In operation '" ++ op
     ++ "' in line " ++ show line ++ ", column " ++ show col ++ ":\n  Expected '"
