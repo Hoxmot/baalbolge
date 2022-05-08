@@ -52,7 +52,7 @@ ILambda.   InternalFunc ::= Type "[" ArgsList "]" [Exp] ;
 IVarDecl.  InternalFunc ::= Type Var Exp ;
 ITransact. InternalFunc ::= "transaction" [Exp] ;
 IIf.       InternalFunc ::= "if" Exp Exp Exp ;
-IWhile.    InternalFunc ::= "while" Exp ;
+IWhile.    InternalFunc ::= "while" Exp Exp ;
 IWhen.     InternalFunc ::= "when" Exp Exp ;
 IConc.     InternalFunc ::= ";" [SameState] ;
 
