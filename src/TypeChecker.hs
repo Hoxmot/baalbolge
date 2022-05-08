@@ -88,6 +88,9 @@ checkTypesExp e = throwError $ "Checking types of exp: " ++ show e ++ " is not y
 {- | Checks the type for internal function usage in Baalbolge.
 -}
 checkTypesIFunc :: BG.InternalFunc -> CheckTypeState
+{- | For variable declaration, the type of variable has to be the same as the type
+of the expression we try assign to the variable.
+-}
 checkTypesIFunc iFunc@(BG.IVarDecl pos t (BG.Var v) e) = do
     tDecl <- checkTypesType t
     tExp <- checkTypesExp e
@@ -95,6 +98,18 @@ checkTypesIFunc iFunc@(BG.IVarDecl pos t (BG.Var v) e) = do
     if tDecl == tExp
       then put (M.insert v tDecl st) >> return TUnit
       else throwError $ typesError iFunc "VariableDeclaration" pos tDecl tExp
+{- | For the when statement, we don't have any assumptions of the return type. We just
+check that the condition expression is a bool and that there aren't any problems with
+the expression provided as the second argument.
+
+The type of the when statement is var, because we get either the type of
+the second argument or unit if the condition is False.
+-}
+checkTypesIFunc iFunc@(BG.IWhen pos cond e) = do
+    condT <- checkTypesExp cond
+    if condT == TBool
+        then checkTypesExp e >> return TVar
+        else throwError $ typesError iFunc "when statement" pos TBool condT
 checkTypesIFunc e = throwError $ "Checking types for internal function: " ++ show e
     ++ " is not yet implemented"
 
