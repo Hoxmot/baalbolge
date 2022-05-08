@@ -12,7 +12,9 @@ import           Control.Monad.State
 import qualified Baalbolge.Abs        as BG
 
 import           Baalbolge.Print
-import           Types
+import           TypeChecker.Types
+import           Types                (Err)
+
 
 {- | Checks the types in the given program. The check is pefrormed in a static manner.
 If some of the types are unknown due to usage of `var` type, the check is a success and

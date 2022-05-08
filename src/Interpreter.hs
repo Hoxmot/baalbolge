@@ -14,6 +14,7 @@ import qualified Baalbolge.Abs        as BG
 import           Baalbolge.Print
 import           Types
 
+
 {- | Interprets the whole program and returns its result or an error.
 -}
 interpret :: BG.Exps -> Err Result
