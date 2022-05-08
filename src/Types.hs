@@ -9,6 +9,9 @@ module Types
       -- * Data structures
       , Result (..)
       , Type (..)
+
+      -- * Type functions
+      , tSum
   ) where
 
 import qualified Data.Map             as M
@@ -60,3 +63,9 @@ instance Eq Type
     TInt == TInt = True
     TBool == TBool = True
     _ == _ = False
+
+tSum :: Type -> Type -> Type
+tSum TUnit TUnit = TUnit
+tSum TInt TInt = TInt
+tSum TBool TBool = TBool
+tSum _ _ = TVar
