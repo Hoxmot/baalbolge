@@ -103,12 +103,13 @@ check that the condition expression is a bool and that there aren't any problems
 the expression provided as the second argument.
 
 The type of the when statement is var, because we get either the type of
-the second argument or unit if the condition is False.
+the second argument or unit if the condition is False. In theory, the type can be unit if
+the type of the expression is also unit, but such code wouldn't make much sense.
 -}
 checkTypesIFunc iFunc@(BG.IWhen pos cond e) = do
     condT <- checkTypesExp cond
     if condT == TBool
-        then checkTypesExp e >> return TVar
+        then checkTypesExp e >>= \t -> return $ tSum TUnit t
         else throwError $ typesError iFunc "when statement" pos TBool condT
 checkTypesIFunc e = throwError $ "Checking types for internal function: " ++ show e
     ++ " is not yet implemented"

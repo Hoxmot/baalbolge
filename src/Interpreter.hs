@@ -75,7 +75,13 @@ interpretIFunc iFunc@(BG.IVarDecl pos t (BG.Var v) e) = do
     ex <- interpretExp e
     if typeEq t ex
         then put (M.insert v ex st) >> return RUnit
-        else throwError $ typesError iFunc "VariableDeclaration" pos t ex
+        else throwError $ typesError iFunc "VariableDeclaration" pos (pprintType t) (pprintResult ex)
+interpretIFunc iFunc@(BG.IWhen pos cond e) = do
+    condVal <- interpretExp cond
+    case condVal of
+        RBool b -> if b then interpretExp e else return RUnit
+        _ -> throwError $ typesError iFunc "when statement" pos "bool" (pprintResult condVal)
+
 interpretIFunc e = throwError $ "Interpretation of internal function: " ++ show e
     ++ " is not yet implemented"
 
@@ -135,15 +141,15 @@ varNotFoundHandler :: Print a => a -> BG.BNFC'Position -> String -> InterpreterS
 varNotFoundHandler ex pos er = throwError $ varNotFoundError ex er pos
 
 -- | Creates a message about types error in the code.
-typesError :: Print a => a -> String -> BG.BNFC'Position -> BG.Type -> Result -> String
+typesError :: Print a => a -> String -> BG.BNFC'Position -> String -> String -> String
 typesError ex op (Just (line, col)) t1 t2 =
     "Runtime exception! Types don't match! In operation '" ++ op
     ++ "' in line " ++ show line ++ ", column " ++ show col ++ ":\n  Expected '"
-    ++ pprintType t1 ++ "' but got '" ++ pprintResult t2 ++ "'!\n    (" ++ printTree ex ++ ")"
+    ++ t1 ++ "' but got '" ++ t2 ++ "'!\n    (" ++ printTree ex ++ ")"
 typesError ex op Nothing t1 t2 =
     "Runtime exception! Types don't match! In operation '" ++ op
-    ++ "' at undetermined position:\n  Expected '" ++ pprintType t1
-    ++ "' but got '" ++ pprintResult t2 ++ "'!\n    (" ++ printTree ex ++ ")"
+    ++ "' at undetermined position:\n  Expected '" ++ t1
+    ++ "' but got '" ++ t2 ++ "'!\n    (" ++ printTree ex ++ ")"
 
 {- | Extends a simple information regaring 'variable not found' error with information
 position of the erorr and the code itself.
