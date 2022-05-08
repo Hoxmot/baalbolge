@@ -4,11 +4,13 @@ module TypeChecker.Types
       , CheckTypeState
 
       -- * Data structures
+      , MemoryObj (..)
       , Type (..)
 
       -- * Type functions
       , tSum
   ) where
+
 
 import qualified Data.Map             as M
 
@@ -16,22 +18,22 @@ import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.State
 
+
+-- Internal types
 type Name = String
 type ExT = ExceptT String
 
-type CheckTypeEnv = M.Map Name Type
+type CheckTypeEnv = M.Map Name MemoryObj
 type CheckTypeSt = CheckTypeEnv
 
 type CheckTypeReader = ExT (Reader CheckTypeEnv) Type
 type CheckTypeState =  ExT (State CheckTypeSt) Type
 
+-- Internal datastructures
+data MemoryObj = Var Type | Func Type [Type]
+
 -- | The representation of types used in Baalbolge for the purpose of type checking
 data Type = TUnit | TInt | TBool | TVar
-
-{- | The representation of types used in Baalbolge for the purpose of computing the result
-of computation.
--}
-data Result = RUnit | RInt Integer | RBool Bool deriving (Show)
 
 instance Show Type
   where
