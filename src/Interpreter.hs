@@ -81,7 +81,11 @@ interpretIFunc iFunc@(BG.IWhen pos cond e) = do
     case condVal of
         RBool b -> if b then interpretExp e else return RUnit
         _ -> throwError $ typesError iFunc "when statement" pos "bool" (pprintResult condVal)
-
+interpretIFunc iFunc@(BG.IIf pos cond e1 e2) = do
+    condVal <- interpretExp cond
+    case condVal of
+        RBool b -> if b then interpretExp e1 else interpretExp e2
+        _ -> throwError $ typesError iFunc "if statement" pos "bool" (pprintResult condVal)
 interpretIFunc e = throwError $ "Interpretation of internal function: " ++ show e
     ++ " is not yet implemented"
 
