@@ -70,22 +70,65 @@ interpretExp e = throwError $ "Interpretation of exp: " ++ show e
 {- | Interprets an internal function usage in Baalbolge.
 -}
 interpretIFunc :: BG.InternalFunc -> InterpreterState
+{- | Variable declaration computes the value of the expression and checks if it matches
+the requested type. If there's a match, the variable is created and the value is assigned.
+If the types don't match, runtime exception is thrown.
+
+The value of the variable declaration is unit.
+-}
 interpretIFunc iFunc@(BG.IVarDecl pos t (BG.Var v) e) = do
     st <- get
     ex <- interpretExp e
     if typeEq t ex
         then put (M.insert v ex st) >> return RUnit
-        else throwError $ typesError iFunc "VariableDeclaration" pos (pprintType t) (pprintResult ex)
+        else throwError $ typesError iFunc "variable declaration" pos (pprintType t) (pprintResult ex)
+{- | When statement computes the condition first. Then, it checks whether the type is
+bool. If it is, then the computation continues and depending on the value (True/False),
+the given expression is computed or not. If the type of the condition isn't bool, runtime
+exception is thrown.
+
+The result of the when statement is the value of the expression (if the condition is True),
+or unit (if the condition is False).
+-}
 interpretIFunc iFunc@(BG.IWhen pos cond e) = do
     condVal <- interpretExp cond
     case condVal of
         RBool b -> if b then interpretExp e else return RUnit
         _ -> throwError $ typesError iFunc "when statement" pos "bool" (pprintResult condVal)
+{- | If statement computes the condition first. Then, it checks whether the type is
+bool. If it is, then the computation continues and depending on the value (True/False),
+one of the expressions is computed. If the type of the condition isn't bool, runtime
+exception is thrown.
+
+The result of the if statement is the value of the computed expression.
+-}
 interpretIFunc iFunc@(BG.IIf pos cond e1 e2) = do
     condVal <- interpretExp cond
     case condVal of
         RBool b -> if b then interpretExp e1 else interpretExp e2
         _ -> throwError $ typesError iFunc "if statement" pos "bool" (pprintResult condVal)
+{- | While loop computes the condition first. Then, it checks whether the type is
+bool. If it is, then the computation continues and the given expression is evalueated
+if the condition is True. If the type of the condition isn't bool, runtime exception
+is thrown.
+
+If the value of the given expression is other than unit, the while loop stops and the value
+is returned. If it's unit, the while loop computes again.
+
+The result of the while loop is the value of the expression (if the condition is True and
+the value of the expression is not unit), or unit (if the condition is False).
+-}
+interpretIFunc iFunc@(BG.IWhile pos cond e) = do
+    condVal <- interpretExp cond
+    case condVal of
+        RBool b -> if b
+            then do
+                val <- interpretExp e
+                case val of
+                    RUnit -> interpretIFunc iFunc
+                    _     -> return val
+            else return RUnit
+        _ -> throwError $ typesError iFunc "while loop" pos "bool" (pprintResult condVal)
 interpretIFunc e = throwError $ "Interpretation of internal function: " ++ show e
     ++ " is not yet implemented"
 
