@@ -111,6 +111,14 @@ checkTypesIFunc iFunc@(BG.IWhen pos cond e) = do
     if condT == TBool
         then checkTypesExp e >>= \t -> return $ tSum TUnit t
         else throwError $ typesError iFunc "when statement" pos TBool condT
+checkTypesIFunc iFunc@(BG.IIf pos cond e1 e2) = do
+    condT <- checkTypesExp cond
+    if condT == TBool
+        then do
+            e1T <- checkTypesExp e1
+            e2T <- checkTypesExp e2
+            return $ tSum e1T e2T
+        else throwError $ typesError iFunc "if statement" pos TBool condT
 checkTypesIFunc e = throwError $ "Checking types for internal function: " ++ show e
     ++ " is not yet implemented"
 
