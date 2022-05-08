@@ -111,6 +111,13 @@ checkTypesIFunc iFunc@(BG.IWhen pos cond e) = do
     if condT == TBool
         then checkTypesExp e >>= \t -> return $ tSum TUnit t
         else throwError $ typesError iFunc "when statement" pos TBool condT
+{- | For the if statement, we don't have any assumptions of the return type. We just
+check that the condition expression is a bool and that there aren't any problems with
+the expression provided as the second and third argument.d
+
+The type of the when statement is determined by the then and else expressions and is their
+sum.
+-}
 checkTypesIFunc iFunc@(BG.IIf pos cond e1 e2) = do
     condT <- checkTypesExp cond
     if condT == TBool
@@ -119,6 +126,20 @@ checkTypesIFunc iFunc@(BG.IIf pos cond e1 e2) = do
             e2T <- checkTypesExp e2
             return $ tSum e1T e2T
         else throwError $ typesError iFunc "if statement" pos TBool condT
+{- | For the while loop, we don't have any assumptions of the return type. We just
+check that the condition expression is a bool and that there aren't any problems with
+the expression provided as the second argument.
+
+The type of the when statement is either unit or var. If the condition is False, unit is 
+returned. If the value of the expression is unit, the loop continues execution and
+checks the condition. If the value of the expression is other than unit, the loop stops
+and the value is returned.
+-}
+checkTypesIFunc iFunc@(BG.IWhile pos cond e) = do
+    condT <- checkTypesExp cond
+    if condT == TBool
+        then checkTypesExp e >>= \t -> return $ tSum TUnit t
+        else throwError $ typesError iFunc "while statement" pos TBool condT
 checkTypesIFunc e = throwError $ "Checking types for internal function: " ++ show e
     ++ " is not yet implemented"
 
