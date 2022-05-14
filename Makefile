@@ -13,6 +13,5 @@ testing : test
 
 clean :
 	make -C src clean
-	make -C test clean
 
 # EOF

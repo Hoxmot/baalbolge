@@ -1,0 +1,35 @@
+good-cases:
+  path: ../examples/good/
+  cases:
+    - name: Returns unit
+      file: unit.bg
+      out: ""
+      return: 0
+    - name: Returns int
+      file: int.bg
+      out: 0
+      return: 0
+    - name: Returns int different from 0
+      file: int-exit_code.bg
+      out: 42
+      return: 42
+    - name: Returns True
+      file: bool-true.bg
+      out: True
+      return: 0
+    - name: Returns False
+      file: bool-false.bg
+      out: False
+      return: 1
+    - name: Should add integers
+      file: add.bg
+      out: 3
+      return: 3
+    - name: Should subtract integers
+      file: sub.bg
+      out: 1
+      return: 1
+
+bad-cases:
+  path: ../examples/bad
+  cases:
