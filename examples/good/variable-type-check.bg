@@ -1,0 +1,5 @@
+(int a 42)
+(int b a)
+(var c b)
+(int d c)
+d

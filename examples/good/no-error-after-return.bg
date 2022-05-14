@@ -1,0 +1,3 @@
+(int x 42)
+x
+(bool t x)

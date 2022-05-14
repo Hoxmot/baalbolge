@@ -1,0 +1,10 @@
+(int a 42)
+(int b 7)
+(bool c True)
+(var d False)
+(var e ())
+(bool f False)
+(var g 1234567890)
+($ h ())
+(var i True)
+f

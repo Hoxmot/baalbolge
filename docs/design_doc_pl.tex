@@ -45,7 +45,7 @@ EUnit.     Exp ::= "()" ;
 BTrue.  Bool ::= "True" ;
 BFalse. Bool ::= "False" ;
 
-LList. List ::= "<" [Exp] ">" ;
+LList. List ::= "<|" [Exp] "|>" ;
 
 IFuncDecl. InternalFunc ::= Type Var "[" ArgsList "]" [Exp] ;
 ILambda.   InternalFunc ::= Type "[" ArgsList "]" [Exp] ;
@@ -65,7 +65,7 @@ AArg. Arg ::= "(" Type Var ")" ;
 TInt.  Type ::= "int" ;
 TBool. Type ::= "bool" ;
 TVar.  Type ::= "var" ;
-TList. Type ::= "<" Type ">" ;
+TList. Type ::= "<|" Type "|>" ;
 TUnit. Type ::= "$" ;
 
 token Var

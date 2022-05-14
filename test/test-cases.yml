@@ -13,6 +13,10 @@ good-cases:
       file: int-exit_code.bg
       out: 42
       return: 42
+    - name: If return code is bigger than 255, modulo is returned
+      file: int-exit_code-bigger-255.bg
+      out: 1234567890
+      return: 180
     - name: Returns True
       file: bool-true.bg
       out: True
@@ -29,6 +33,142 @@ good-cases:
       file: sub.bg
       out: 1
       return: 1
+    - name: Should multiply integers
+      file: mul.bg
+      out: 42
+      return: 42
+    - name: Should divide integers
+      file: div.bg
+      out: 2
+      return: 2
+    - name: Should divide integers using integer division
+      file: div-int.bg
+      out: 2
+      return: 2
+    - name: Should perform modulo operation on integers
+      file: mod.bg
+      out: 2
+      return: 2
+    - name: Integers should be equal
+      file: eq-true.bg
+      out: True
+      return: 0
+    - name: Integers should not be equal
+      file: eq-false.bg
+      out: False
+      return: 1
+    - name: Integer should be bigger than another integer
+      file: gt-true.bg
+      out: True
+      return: 0
+    - name: Integer should not be bigger than another integer
+      file: gt-false.bg
+      out: False
+      return: 1
+    - name: Variable integers should be equal
+      file: eq-variable.bg
+      out: True
+      return: 0
+    - name: Var integers should be equal
+      file: eq-variable-var-true.bg
+      out: True
+      return: 0
+    - name: Var integers should not be equal
+      file: eq-variable-var-false.bg
+      out: False
+      return: 1
+    - name: Give calculations should be performed correctly
+      file: some-calculations.bg
+      out: True
+      return: 0
+    - name: Should create variable
+      file: variable.bg
+      out: ""
+      return: 0
+    - name: Should correctly check types for var and int
+      file: variable-type-check.bg
+      out: 42
+      return: 42
+    - name: Should return variable value for int
+      file: variable-int.bg
+      out: 42
+      return: 42
+    - name: Should return variable value for bool
+      file: variable-bool.bg
+      out: True
+      return: 0
+    - name: Should return variable value for unit
+      file: variable-unit.bg
+      out: ""
+      return: 0
+    - name: Should return variable value for var int
+      file: variable-var-int.bg
+      out: 7
+      return: 7
+    - name: Should return variable value for var bool
+      file: variable-var-bool.bg
+      out: False
+      return: 1
+    - name: Should return variable value for var unit
+      file: variable-var-unit.bg
+      out: ""
+      return: 0
+    - name: Variable creation should return unit and only last variable call returns value
+      file: variable-creation.bg
+      out: False
+      return: 1
+    - name: You can overwrite variables and the last assigned value is returned
+      file: variable-overwrite.bg
+      out: 42
+      return: 42
+    - name: Should return first value from two integers
+      file: return-first-value-int.bg
+      out: 42
+      return: 42
+    - name: Should return first value from two bools
+      file: return-first-value-bool.bg
+      out: True
+      return: 0
+    - name: Should return first value from bool and integer
+      file: return-first-value-bool-int.bg
+      out: True
+      return: 0
+    - name: Should return first non-unit value
+      file: return-first-value-bool-int.bg
+      out: True
+      return: 0
+    - name: Should not throw error if it's after return
+      file: no-error-after-return.bg
+      out: 42
+      return: 42
+    - name: while loop should run when condition met
+      file: simple-while.bg
+      out: 42
+      return: 42
+    - name: while loop should return value if expression returns value
+      file: no-error-after-return.bg
+      out: 42
+      return: 42
+    - name: while loop shouldn't execute if condition isn't met
+      file: while-false.bg
+      out: False
+      return: 1
+    - name: if-else should return first branch if True
+      file: if-else-true.bg
+      out: 1
+      return: 1
+    - name: if-else should return second branch if False
+      file: if-else-false.bg
+      out: 2
+      return: 2
+    - name: when should return value if True
+      file: when-true.bg
+      out: 5
+      return: 5
+    - name: when should return unit if False
+      file: when-false.bg
+      out: ""
+      return: 0
 
 bad-cases:
   path: ../examples/bad
