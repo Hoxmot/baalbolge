@@ -33,6 +33,54 @@ good-cases:
       file: sub.bg
       out: 1
       return: 1
+    - name: Should multiply integers
+      file: mul.bg
+      out: 42
+      return: 42
+    - name: Should divide integers
+      file: div.bg
+      out: 2
+      return: 2
+    - name: Should divide integers using integer division
+      file: div-int.bg
+      out: 2
+      return: 2
+    - name: Should perform modulo operation on integers
+      file: mod.bg
+      out: 2
+      return: 2
+    - name: Integers should be equal
+      file: eq-true.bg
+      out: True
+      return: 0
+    - name: Integers should not be equal
+      file: eq-false.bg
+      out: False
+      return: 1
+    - name: Integer should be bigger than another integer
+      file: gt-true.bg
+      out: True
+      return: 0
+    - name: Integer should not be bigger than another integer
+      file: gt-false.bg
+      out: False
+      return: 1
+    - name: Variable integers should be equal
+      file: eq-variable.bg
+      out: True
+      return: 0
+    - name: Var integers should be equal
+      file: eq-variable-var-true.bg
+      out: True
+      return: 0
+    - name: Var integers should not be equal
+      file: eq-variable-var-false.bg
+      out: False
+      return: 1
+    - name: Give calculations should be performed correctly
+      file: some-calculations.bg
+      out: True
+      return: 0
     - name: Should create variable
       file: variable.bg
       out: ""

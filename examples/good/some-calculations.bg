@@ -1,0 +1,8 @@
+(int ten (* 2 5))
+(var x 4)
+(var y 2)
+(int z
+  (+
+    (* x ten)
+    y))
+(= z 42)
