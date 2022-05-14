@@ -92,7 +92,7 @@ exit (RBool b)
     | otherwise = exitFailure
 exit (RInt v)
     | v == 0 = exitSuccess
-    | otherwise = exitWith (ExitFailure $ fromIntegral v)
+    | otherwise = exitWith $ ExitFailure (mod (fromIntegral v) 255)
 
 notImplemented :: IO()
 notImplemented = putStrLn "Not yet implemented..."
