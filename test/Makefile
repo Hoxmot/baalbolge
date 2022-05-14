@@ -1,17 +1,9 @@
-.PHONY : all build_test test
+.PHONY : all test
 
-all : build_test test
-
-# TODO
-build_test : 
-	true
+all : test
 
 # TODO
 test :
-	true
-
-# TODO
-clean :
-	true
+	python end_to_end_test.py
 
 # EOF
