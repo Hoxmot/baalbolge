@@ -141,6 +141,34 @@ good-cases:
       file: no-error-after-return.bg
       out: 42
       return: 42
+    - name: while loop should run when condition met
+      file: simple-while.bg
+      out: 42
+      return: 42
+    - name: while loop should return value if expression returns value
+      file: no-error-after-return.bg
+      out: 42
+      return: 42
+    - name: while loop shouldn't execute if condition isn't met
+      file: while-false.bg
+      out: False
+      return: 1
+    - name: if-else should return first branch if True
+      file: if-else-true.bg
+      out: 1
+      return: 1
+    - name: if-else should return second branch if False
+      file: if-else-false.bg
+      out: 2
+      return: 2
+    - name: when should return value if True
+      file: when-true.bg
+      out: 5
+      return: 5
+    - name: when should return unit if False
+      file: when-false.bg
+      out: ""
+      return: 0
 
 bad-cases:
   path: ../examples/bad

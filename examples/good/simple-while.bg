@@ -1,0 +1,4 @@
+(int x 0)
+(while (> 42 x)
+  (int x (+ x 1)))
+x
