@@ -32,7 +32,8 @@ typeEq _ _                    = False
 for more readability.
 -}
 varNotFoundHandler :: Print a => a -> BG.BNFC'Position -> String -> InterpreterState
-varNotFoundHandler ex pos er = throwError $ varNotFoundError ex er pos
+varNotFoundHandler ex pos er =
+    throwError $ varNotFoundError ex ("Runtime exception! " ++ er) pos
 
 -- | Creates a message about types error in the code.
 typesError :: Print a => a -> String -> BG.BNFC'Position -> String -> String -> String

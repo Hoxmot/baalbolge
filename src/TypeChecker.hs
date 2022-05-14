@@ -8,12 +8,13 @@ import qualified Data.Map             as M
 
 import           Control.Monad.Except
 import           Control.Monad.Reader
-import Control.Monad.State ( evalState, MonadState(get, put) )
+import           Control.Monad.State
 
 import qualified Baalbolge.Abs        as BG
 
+import qualified Memory               as Mem
 import           TypeChecker.Types
-import TypeChecker.Util
+import           TypeChecker.Util
 import           Types                (Err)
 
 
@@ -25,7 +26,7 @@ For the whole program, any type can be returned.
 -}
 checkTypes :: BG.Exps -> Err BG.Exps
 checkTypes prog@(BG.Program _ exps) = do
-    _ <- runReader (runExceptT $ checkTypesExps exps) M.empty
+    _ <- runReader (runExceptT $ checkTypesExps exps) Mem.initialTypeCheckerMem
     return prog
 
 
@@ -100,7 +101,7 @@ checkTypesFuncCall (BG.Var v) args = do
     case M.lookup v st of
         Just obj -> case obj of
             Func t tl -> argsMatch t tl args
-            _ -> throwError $ "'" ++ v ++ "' is not a function!"
+            _         -> throwError $ "'" ++ v ++ "' is not a function!"
         Nothing -> throwError $ "Function '" ++ v ++ "' not found!"
 
 argsMatch :: Type -> [Type] -> [BG.Exp] -> CheckTypeState
