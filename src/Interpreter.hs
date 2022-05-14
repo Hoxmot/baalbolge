@@ -29,8 +29,8 @@ interpret (BG.Program _ exps) = runReader (runExceptT $ interpretExps exps) M.em
 -}
 interpretExps :: [BG.Exp] -> InterpreterReader
 interpretExps exps = do
-    env <- ask
-    case evalState (runExceptT $ interpretExpsRec RUnit exps) env of
+    mem <- ask
+    case evalState (runExceptT $ interpretExpsRec RUnit exps) mem of
         Left l  -> throwError l
         Right r -> return r
 
@@ -66,14 +66,57 @@ Right (RInt 42)
 Right (RBool True)
 -}
 interpretExp :: BG.Exp -> InterpreterState
-interpretExp (BG.EUnit _) = return RUnit
 interpretExp (BG.EInt _ v) = return $ RInt v
 interpretExp (BG.EBool _ b) = interpretBool b
-interpretExp var@(BG.EVar pos v) = interpretVar v `catchError` varNotFoundHandler var pos
+interpretExp e@(BG.EFunc pos var args) = interpretFuncCall var args `catchError` varNotFoundHandler e pos
 interpretExp (BG.EInternal _ int) = interpretIFunc int
+interpretExp var@(BG.EVar pos v) = interpretVar v `catchError` varNotFoundHandler var pos
+interpretExp (BG.EUnit _) = return RUnit
 interpretExp e = throwError $ "Interpretation of exp: " ++ show e
     ++ " is not yet implemented"
 
+
+-- | Interpret a function from the state.
+interpretFuncCall :: BG.Var -> [BG.Exp] -> InterpreterState
+interpretFuncCall (BG.Var v) args = do
+    mem <- get
+    case M.lookup v mem of
+        Just obj -> case obj of
+            BuiltIn f -> f args
+            Func t argsList exps -> interpretFunction t argsList exps args
+            Var _ -> throwError $ "'" ++ v ++ "' is not a function!"
+        Nothing -> throwError $ "Function '" ++ v ++ "' not found!"
+
+
+-- | Interprets a function written in Baalbolge
+interpretFunction :: BG.Type -> [Arg] -> [BG.Exp] -> [BG.Exp] -> InterpreterState
+interpretFunction ft argsList exps args = do
+    env <- createFuncEnv M.empty argsList args
+    st <- get
+    case runReader (runExceptT $ interpretFuncBody ft exps) (M.unionWith unionRight st env) of
+        Left l -> throwError l
+        Right r -> return r
+
+{- | Create an environment for the function to execute. The environment has to be separate
+from the state of the main program, because it can't modify it.
+-}
+createFuncEnv :: InterpreterMemory -> [Arg] -> [BG.Exp] -> InterpreterMemoryState
+createFuncEnv env ((Arg t v):als) (a:as) = do
+    arg <- interpretExp a
+    if typeEq t arg
+        then createFuncEnv (M.insert v (Var arg) env) als as
+        else throwError "Types don't match!"
+createFuncEnv env [] [] = return env
+createFuncEnv _ [] _ = throwError "Too many arguments!"
+createFuncEnv _ _ _ = throwError "Partial function application is not supported yet!"
+
+-- | Interprets the body of the function
+interpretFuncBody  :: BG.Type -> [BG.Exp] -> InterpreterReader
+interpretFuncBody t exps = do
+    res <- interpretExps exps
+    if typeEq t res
+        then return res
+        else throwError "Types don't match!"
 
 
 {- | Interprets an internal function usage in Baalbolge.
@@ -87,10 +130,10 @@ If the types don't match, runtime exception is thrown.
 The value of the variable declaration is unit.
 -}
 interpretIFunc iFunc@(BG.IVarDecl pos t (BG.Var v) e) = do
-    st <- get
+    mem <- get
     ex <- interpretExp e
     if typeEq t ex
-        then put (M.insert v ex st) >> return RUnit
+        then put (M.insert v (Var ex) mem) >> return RUnit
         else throwError $ typesError iFunc "variable declaration" pos (pprintType t) (pprintResult ex)
 
 {- | When statement computes the condition first. Then, it checks whether the type is
@@ -153,20 +196,22 @@ in the state, an error is thrown.
 $setup
 >>> test st e = evalState (runExceptT e) st
 
->>> test (M.singleton "x" (RBool True)) $ interpretVar (BG.Var "x")
+>>> test (M.singleton "x" (Var (RBool True))) $ interpretVar (BG.Var "x")
 Right (RBool True)
 
->>> test (M.singleton "x" (RInt 42)) $ interpretVar (BG.Var "x")
+>>> test (M.singleton "x" (Var (RInt 42))) $ interpretVar (BG.Var "x")
 Right (RInt 42)
 
->>> test (M.singleton "x" RUnit) $ interpretVar (BG.Var "x")
+>>> test (M.singleton "x" (Var RUnit)) $ interpretVar (BG.Var "x")
 Right RUnit
 -}
 interpretVar :: BG.Var -> InterpreterState
 interpretVar (BG.Var v) = do
-    st <- get
-    case M.lookup v st of
-        Just val -> return val
+    mem <- get
+    case M.lookup v mem of
+        Just obj -> case obj of
+            Var val -> return val
+            _ -> throwError "Passing function as variable is not yet implemented!"
         Nothing  -> throwError $ "variable '" ++ v ++ "' not found!"
 
 

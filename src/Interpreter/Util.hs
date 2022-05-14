@@ -1,10 +1,11 @@
 module Interpreter.Util
     ( -- * Functions
-      typeEq,
-      varNotFoundHandler,
-      typesError,
-      pprintResult,
-      pprintType
+      typeEq
+      , unionRight
+      , typesError
+      , varNotFoundHandler
+      , pprintResult
+      , pprintType
   ) where
 
 
@@ -67,3 +68,18 @@ pprintResult :: Result -> String
 pprintResult RUnit     = "unit"
 pprintResult (RInt _)  = "int"
 pprintResult (RBool _) = "bool"
+
+{- | A function used for Data.Map.unionWith, which preferes the second object over the
+first one
+
+>>> unionRight "a" "b"
+"b"
+
+>>> unionRight 7 42
+42
+
+>>> unionRight [42] [7]
+[7]
+-}
+unionRight :: a -> a -> a
+unionRight _o1 o2 = o2
