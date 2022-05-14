@@ -1,6 +1,7 @@
 module Interpreter
     ( -- * Functions
       interpret
+      , interpretExp
   ) where
 
 
@@ -20,7 +21,7 @@ import           Types
 {- | Interprets the whole program and returns its result or an error.
 -}
 interpret :: BG.Exps -> Err Result
-interpret (BG.Program _ exps) = runReader (runExceptT $ interpretExps exps) M.empty
+interpret (BG.Program _ exps) = runReader (runExceptT $ interpretExps exps) initialInterpreterMem
 
 
 
@@ -94,7 +95,7 @@ interpretFunction ft argsList exps args = do
     env <- createFuncEnv M.empty argsList args
     st <- get
     case runReader (runExceptT $ interpretFuncBody ft exps) (M.unionWith unionRight st env) of
-        Left l -> throwError l
+        Left l  -> throwError l
         Right r -> return r
 
 {- | Create an environment for the function to execute. The environment has to be separate
@@ -230,3 +231,96 @@ Right (RBool False)
 interpretBool :: BG.Bool -> InterpreterState
 interpretBool (BG.BTrue _)  = return $ RBool True
 interpretBool (BG.BFalse _) = return $ RBool False
+
+
+
+initialInterpreterMem :: InterpreterMemory
+initialInterpreterMem = M.fromList interpreterMemElems
+
+interpreterMemElems :: [(Name, MemoryObj)]
+interpreterMemElems = [
+    ("+", BuiltIn interpretAdd)
+    , ("-", BuiltIn interpretSub)
+    , ("*", BuiltIn interpretMul)
+    , ("/", BuiltIn interpretDiv)
+    , ("%", BuiltIn interpretMod)
+    , (">", BuiltIn interpretGt)
+    , ("=", BuiltIn interpretEq)
+  ]
+
+interpretAdd :: BuiltInFunction
+interpretAdd [e1, e2] = do
+    v1 <- interpretExp e1
+    v2 <- interpretExp e2
+    case (v1, v2) of
+        (RInt x, RInt y) -> return (RInt $ x + y)
+        (RInt _, t2) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t2 ++ "'!"
+        (t1, _) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t1 ++ "'!"
+interpretAdd (_:_:_:_) = throwError "Too many arguments!"
+interpretAdd _ = throwError "Partial function application is not supported yet!"
+
+interpretSub :: BuiltInFunction
+interpretSub [e1, e2] = do
+    v1 <- interpretExp e1
+    v2 <- interpretExp e2
+    case (v1, v2) of
+        (RInt x, RInt y) -> return (RInt $ x - y)
+        (RInt _, t2) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t2 ++ "'!"
+        (t1, _) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t1 ++ "'!"
+interpretSub (_:_:_:_) = throwError "Too many arguments!"
+interpretSub _ = throwError "Partial function application is not supported yet!"
+
+interpretMul :: BuiltInFunction
+interpretMul [e1, e2] = do
+    v1 <- interpretExp e1
+    v2 <- interpretExp e2
+    case (v1, v2) of
+        (RInt x, RInt y) -> return (RInt $ x * y)
+        (RInt _, t2) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t2 ++ "'!"
+        (t1, _) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t1 ++ "'!"
+interpretMul (_:_:_:_) = throwError "Too many arguments!"
+interpretMul _ = throwError "Partial function application is not supported yet!"
+
+interpretDiv :: BuiltInFunction
+interpretDiv [e1, e2] = do
+    v1 <- interpretExp e1
+    v2 <- interpretExp e2
+    case (v1, v2) of
+        (RInt x, RInt y) -> return (RInt $ div x y)
+        (RInt _, t2) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t2 ++ "'!"
+        (t1, _) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t1 ++ "'!"
+interpretDiv (_:_:_:_) = throwError "Too many arguments!"
+interpretDiv _ = throwError "Partial function application is not supported yet!"
+
+interpretMod :: BuiltInFunction
+interpretMod [e1, e2] = do
+    v1 <- interpretExp e1
+    v2 <- interpretExp e2
+    case (v1, v2) of
+        (RInt x, RInt y) -> return (RInt $ mod x y)
+        (RInt _, t2) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t2 ++ "'!"
+        (t1, _) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t1 ++ "'!"
+interpretMod (_:_:_:_) = throwError "Too many arguments!"
+interpretMod _ = throwError "Partial function application is not supported yet!"
+
+interpretGt :: BuiltInFunction
+interpretGt [e1, e2] = do
+    v1 <- interpretExp e1
+    v2 <- interpretExp e2
+    case (v1, v2) of
+        (RInt x, RInt y) -> return (RBool $ x > y)
+        (RInt _, t2) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t2 ++ "'!"
+        (t1, _) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t1 ++ "'!"
+interpretGt (_:_:_:_) = throwError "Too many arguments!"
+interpretGt _ = throwError "Partial function application is not supported yet!"
+
+interpretEq :: BuiltInFunction
+interpretEq [e1, e2] = do
+    v1 <- interpretExp e1
+    v2 <- interpretExp e2
+    case (v1, v2) of
+        (RInt x, RInt y) -> return (RBool $ x == y)
+        (RInt _, t2) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t2 ++ "'!"
+        (t1, _) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t1 ++ "'!"
+interpretEq (_:_:_:_) = throwError "Too many arguments!"
+interpretEq _ = throwError "Partial function application is not supported yet!"

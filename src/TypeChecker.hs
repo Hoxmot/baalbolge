@@ -12,7 +12,7 @@ import           Control.Monad.State
 
 import qualified Baalbolge.Abs        as BG
 
-import qualified Memory               as Mem
+import qualified TypeChecker.Memory   as Mem
 import           TypeChecker.Types
 import           TypeChecker.Util
 import           Types                (Err)
