@@ -121,6 +121,26 @@ good-cases:
       file: variable-overwrite.bg
       out: 42
       return: 42
+    - name: Should return first value from two integers
+      file: return-first-value-int.bg
+      out: 42
+      return: 42
+    - name: Should return first value from two bools
+      file: return-first-value-bool.bg
+      out: True
+      return: 0
+    - name: Should return first value from bool and integer
+      file: return-first-value-bool-int.bg
+      out: True
+      return: 0
+    - name: Should return first non-unit value
+      file: return-first-value-bool-int.bg
+      out: True
+      return: 0
+    - name: Should not throw error if it's after return
+      file: no-error-after-return.bg
+      out: 42
+      return: 42
 
 bad-cases:
   path: ../examples/bad
