@@ -2,6 +2,8 @@ module TypeChecker.Types
     ( -- * Data types
       CheckTypeReader
       , CheckTypeState
+      , CheckTypeMemory
+      , Name
 
       -- * Data structures
       , MemoryObj (..)
@@ -23,11 +25,10 @@ import           Control.Monad.State
 type Name = String
 type ExT = ExceptT String
 
-type CheckTypeEnv = M.Map Name MemoryObj
-type CheckTypeSt = CheckTypeEnv
+type CheckTypeMemory = M.Map Name MemoryObj
 
-type CheckTypeReader = ExT (Reader CheckTypeEnv) Type
-type CheckTypeState =  ExT (State CheckTypeSt) Type
+type CheckTypeReader = ExT (Reader CheckTypeMemory) Type
+type CheckTypeState =  ExT (State CheckTypeMemory) Type
 
 -- Internal datastructures
 data MemoryObj = Var Type | Func Type [Type]

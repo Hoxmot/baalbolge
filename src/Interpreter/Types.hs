@@ -6,6 +6,7 @@ module Interpreter.Types
       , InterpreterMemoryState
       , InterpreterReader
       , InterpreterState
+      , Name
 
       -- * Data structures
       , Result (..)
@@ -19,9 +20,9 @@ import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.State
 
-import qualified Baalbolge.Abs as BG
+import qualified Baalbolge.Abs        as BG
 
-import Types
+import           Types
 
 type ExT = ExceptT String
 
