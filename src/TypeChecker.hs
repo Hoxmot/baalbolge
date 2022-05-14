@@ -108,7 +108,8 @@ argsMatch retT (t:xt) (a:xa) = do
     argT <- checkTypesExp a
     if t == argT
         then argsMatch retT xt xa
-        else throwError $ "Types don't match! Expected: '" ++ show t ++ "' but got '" ++ show argT ++ "'!"
+        else throwError $ "Types don't match! Expected: '" ++ show t
+            ++ "' but got '" ++ show argT ++ "'!"
 argsMatch retT [] [] = return retT
 argsMatch _ [] _ = throwError "Too many arguments!"
 argsMatch _ _ [] = throwError "Partial functions not implemented yet!"
