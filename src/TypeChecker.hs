@@ -16,19 +16,20 @@ import qualified TypeChecker.Memory   as Mem
 import           TypeChecker.Types
 import           TypeChecker.Util
 import           Types                (Err)
-import TypeChecker.Types (Type(TFunc))
 
 
 {- | Checks the types in the given program. The check is pefrormed in a static manner.
 If some of the types are unknown due to usage of `var` type, the check is a success and
 any problems with types are found and thrown during execution of the program.
 
-For the whole program, any type can be returned.
+For the whole program, any type other than function can be returned.
 -}
 checkTypes :: BG.Exps -> Err BG.Exps
 checkTypes prog@(BG.Program _ exps) = do
-    _ <- runReader (runExceptT $ checkTypesExps exps) Mem.initialTypeCheckerMem
-    return prog
+    ret <- runReader (runExceptT $ checkTypesExps exps) Mem.initialTypeCheckerMem
+    case ret of
+        TFunc _ _ -> throwError "The program cannot return a function!"
+        _ -> return prog
 
 
 
@@ -102,7 +103,9 @@ checkTypesFuncCall (BG.Var v) args = do
     case M.lookup v st of
         Just obj -> case obj of
             Func t tl -> argsMatch t tl args
-            _         -> throwError $ "'" ++ v ++ "' is not a function!"
+            Var (TFunc t tl) -> argsMatch t tl args
+            Var TVar -> return TVar
+            _ -> throwError $ "'" ++ v ++ "' is not a function!"
         Nothing -> throwError $ "Function '" ++ v ++ "' not found!"
 
 argsMatch :: Type -> [Type] -> [BG.Exp] -> CheckTypeState
@@ -231,7 +234,7 @@ checkTypesVar (BG.Var v) = do
     st <- get
     case M.lookup v st of
         Just o -> case o of
-            Var t -> return t
+            Var t           -> return t
             Func t argsList -> return $ TFunc t argsList
         Nothing -> throwError $ "Variable '" ++ v ++ "' not found!"
 
