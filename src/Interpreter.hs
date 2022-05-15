@@ -108,7 +108,8 @@ createFuncEnv env ((Arg t v):als) (a:as) = do
     arg <- interpretExp a
     if typeEq t arg
         then createFuncEnv (M.insert v (Var arg) env) als as
-        else throwError "Types don't match!"
+        else throwError $ "Types don't match! Expected '" ++ pprintType t
+            ++ "', but got '" ++ pprintResult arg ++ "'!"
 createFuncEnv env [] [] = return env
 createFuncEnv _ [] _ = throwError "Too many arguments!"
 createFuncEnv _ _ _ = throwError "Partial function application is not supported yet!"
@@ -119,7 +120,8 @@ interpretFuncBody t exps = do
     res <- interpretExps exps
     if typeEq t res
         then return res
-        else throwError "Types don't match!"
+        else throwError $ "Types don't match! Expected '" ++ pprintType t
+            ++ "', but got '" ++ pprintResult res ++ "'!"
 
 
 {- | Interprets an internal function usage in Baalbolge.
