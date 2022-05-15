@@ -1,0 +1,4 @@
+(var x 42)
+(bool not [(bool b)]
+  (if b False True))
+(not x) # Runtime exception

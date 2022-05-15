@@ -1,0 +1,7 @@
+(var apply [(var f) (var v)]
+  (f v))
+
+(var partialMul [(int x)]
+  (int [(int y)] (* x y)))
+
+(apply (partialMul 7) 6)
