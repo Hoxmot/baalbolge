@@ -21,7 +21,12 @@ import           Types
 {- | Interprets the whole program and returns its result or an error.
 -}
 interpret :: BG.Exps -> Err Result
-interpret (BG.Program _ exps) = runReader (runExceptT $ interpretExps exps) initialInterpreterMem
+interpret (BG.Program _ exps) = do
+    ret <- runReader (runExceptT $ interpretExps exps) initialInterpreterMem
+    case ret of
+        RFunc {} -> throwError "Runtime exception! The program cannot return a function!"
+        RBFunc _ -> throwError "Runtime exception! The program cannot return a function!"
+        _ -> return ret
 
 
 
