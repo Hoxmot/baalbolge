@@ -3,6 +3,7 @@ module TypeChecker.Types
       CheckTypeReader
       , CheckTypeState
       , CheckTypeMemory
+      , CheckTypeMemoryState
       , Name
 
       -- * Data structures
@@ -29,6 +30,7 @@ type CheckTypeMemory = M.Map Name MemoryObj
 
 type CheckTypeReader = ExT (Reader CheckTypeMemory) Type
 type CheckTypeState =  ExT (State CheckTypeMemory) Type
+type CheckTypeMemoryState = ExT (State CheckTypeMemory) CheckTypeMemory
 
 -- Internal datastructures
 data MemoryObj = Var Type | Func Type [Type]
