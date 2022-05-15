@@ -58,13 +58,13 @@ $setup
 >>> test e = evalState (runExceptT e) M.empty
 
 >>> test $ interpretExp (BG.EUnit p)
-Right RUnit
+Right unit
 
 >>> test $ interpretExp (BG.EInt p 42)
-Right (RInt 42)
+Right int 42
 
 >>> test $ interpretExp (BG.EBool p b)
-Right (RBool True)
+Right bool True
 -}
 interpretExp :: BG.Exp -> InterpreterState
 interpretExp (BG.EInt _ v) = return $ RInt v
@@ -84,17 +84,19 @@ interpretFuncCall (BG.Var v) args = do
     case M.lookup v mem of
         Just obj -> case obj of
             BuiltIn f -> f args
-            Func t argsList exps -> interpretFunction t argsList exps args
+            f@(Func t argsList exps funcState) -> interpretFunction t argsList exps (M.insert v f funcState) args
+            Var (RFunc t argsList exps funcState) ->
+                interpretFunction t argsList exps (M.insert v (Func t argsList exps funcState) funcState) args
+            Var (RBFunc f) -> f args
             Var _ -> throwError $ "'" ++ v ++ "' is not a function!"
         Nothing -> throwError $ "Function '" ++ v ++ "' not found!"
 
 
 -- | Interprets a function written in Baalbolge
-interpretFunction :: BG.Type -> [Arg] -> [BG.Exp] -> [BG.Exp] -> InterpreterState
-interpretFunction ft argsList exps args = do
-    env <- createFuncEnv M.empty argsList args
-    st <- get
-    case runReader (runExceptT $ interpretFuncBody ft exps) (M.unionWith unionRight st env) of
+interpretFunction :: BG.Type -> [Arg] -> [BG.Exp] -> InterpreterMemory -> [BG.Exp] -> InterpreterState
+interpretFunction ft argsList exps funcState args = do
+    funcMem <- createFuncEnv funcState argsList args
+    case runReader (runExceptT $ interpretFuncBody ft exps) funcMem of
         Left l  -> throwError l
         Right r -> return r
 
@@ -194,7 +196,7 @@ The resulf of the function declaration is unit.
 -}
 interpretIFunc (BG.IFuncDecl _ t (BG.Var v) (BG.AList _ argsList) exps) = do
     mem <- get
-    put (M.insert v (Func t (map argsMapper argsList) exps) mem)
+    put (M.insert v (Func t (map argsMapper argsList) exps mem) mem)
     return RUnit
   where
     argsMapper (BG.AArg _ at (BG.Var av)) = Arg at av
@@ -211,13 +213,13 @@ $setup
 >>> test st e = evalState (runExceptT e) st
 
 >>> test (M.singleton "x" (Var (RBool True))) $ interpretVar (BG.Var "x")
-Right (RBool True)
+Right bool True
 
 >>> test (M.singleton "x" (Var (RInt 42))) $ interpretVar (BG.Var "x")
-Right (RInt 42)
+Right int 42
 
 >>> test (M.singleton "x" (Var RUnit)) $ interpretVar (BG.Var "x")
-Right RUnit
+Right unit
 -}
 interpretVar :: BG.Var -> InterpreterState
 interpretVar (BG.Var v) = do
@@ -225,7 +227,8 @@ interpretVar (BG.Var v) = do
     case M.lookup v mem of
         Just obj -> case obj of
             Var val -> return val
-            _ -> throwError "Passing function as variable is not yet implemented!"
+            Func t argsList exps funcState -> return $ RFunc t argsList exps funcState
+            BuiltIn f -> return $ RBFunc f
         Nothing  -> throwError $ "variable '" ++ v ++ "' not found!"
 
 
@@ -236,10 +239,10 @@ $setup
 >>> test e = evalState (runExceptT e) M.empty
 
 >>> test $ interpretBool (BG.BTrue p)
-Right (RBool True)
+Right bool True
 
 >>> test $ interpretBool (BG.BFalse p)
-Right (RBool False)
+Right bool False
 -}
 interpretBool :: BG.Bool -> InterpreterState
 interpretBool (BG.BTrue _)  = return $ RBool True

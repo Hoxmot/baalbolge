@@ -8,7 +8,8 @@ import qualified Util               (checkParentheses, exit, notImplemented,
                                      readCommand)
 
 import           Baalbolge.Par      (myLexer, pExps)
-import           Types
+import           Interpreter.Types  (Result)
+import           Types              (Err)
 import           Util               (Command (..), printResponse)
 
 
@@ -18,12 +19,8 @@ fileMode f = putStrLn f >> readFile f >>= runFile
 runFile :: String -> IO ()
 runFile s =
     case run s of
-      Left err -> do
-        putStrLn err
-        exitFailure
-      Right res -> do
-        Util.printResponse res
-        Util.exit res
+        Left err  -> putStrLn err >> exitFailure
+        Right res -> Util.printResponse res >> Util.exit res
 
 interactiveMode :: IO ()
 interactiveMode = readStdIn "" 0 >> interactiveMode
