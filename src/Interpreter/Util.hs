@@ -69,6 +69,8 @@ pprintResult :: Result -> String
 pprintResult RUnit     = "unit"
 pprintResult (RInt _)  = "int"
 pprintResult (RBool _) = "bool"
+pprintResult RFunc {} = "func"
+pprintResult RBFunc {} = "built-in"
 
 {- | A function used for Data.Map.unionWith, which preferes the second object over the
 first one

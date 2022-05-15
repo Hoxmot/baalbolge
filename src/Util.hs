@@ -14,11 +14,11 @@ module Util
       , notImplementedError
   ) where
 
-import           System.Exit     (ExitCode (ExitFailure), exitFailure,
-                                  exitSuccess, exitWith)
+import           System.Exit       (ExitCode (ExitFailure), exitFailure,
+                                    exitSuccess, exitWith)
 
-import           Baalbolge.Print (Print, printTree)
-import           Types
+import           Baalbolge.Print   (Print, printTree)
+import           Interpreter.Types
 
 
 -- | A command for controlling the interpeter in the interactive mode.
@@ -84,6 +84,8 @@ printResponse :: Result -> IO ()
 printResponse RUnit     = putStrLn ""
 printResponse (RBool b) = print b
 printResponse (RInt v)  = print v
+printResponse RFunc {} = putStrLn "I'm a teapot"
+printResponse RBFunc {} = putStrLn "I'm a teapot"
 
 exit :: Result -> IO ()
 exit RUnit = exitSuccess
@@ -95,6 +97,8 @@ exit (RInt v)
     | otherwise = exitWith $ ExitFailure (fromIntegral retVal)
   where
     retVal = v `mod` 256
+exit RFunc {} = exitWith $ ExitFailure 13
+exit RBFunc {} = exitWith $ ExitFailure 13
 
 notImplemented :: IO()
 notImplemented = putStrLn "Not yet implemented..."
