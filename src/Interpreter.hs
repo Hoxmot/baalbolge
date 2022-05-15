@@ -203,6 +203,16 @@ interpretIFunc (BG.IFuncDecl _ t (BG.Var v) (BG.AList _ argsList) exps) = do
   where
     argsMapper (BG.AArg _ at (BG.Var av)) = Arg at av
 
+{- | Lambda declaration just creates the object of a function and returns it.
+No additional checks.
+
+The resulf of the function declaration is the function object.
+-}
+interpretIFunc (BG.ILambda _ t (BG.AList _ argsList) exps) =
+    gets $ RFunc t (map argsMapper argsList) exps
+  where
+    argsMapper (BG.AArg _ at (BG.Var av)) = Arg at av
+
 interpretIFunc e = throwError $ "Interpretation of internal function: " ++ show e
     ++ " is not yet implemented"
 
