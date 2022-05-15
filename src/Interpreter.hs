@@ -186,6 +186,19 @@ interpretIFunc iFunc@(BG.IWhile pos cond e) = do
                     _     -> return val
             else return RUnit
         _ -> throwError $ typesError iFunc "while loop" pos "bool" (pprintResult condVal)
+
+{- | Function declaration just creates the memory object of a function and puts it in the
+memory. No additional checks.
+
+The resulf of the function declaration is unit.
+-}
+interpretIFunc (BG.IFuncDecl _ t (BG.Var v) (BG.AList _ argsList) exps) = do
+    mem <- get
+    put (M.insert v (Func t (map argsMapper argsList) exps) mem)
+    return RUnit
+  where
+    argsMapper (BG.AArg _ at (BG.Var av)) = Arg at av
+
 interpretIFunc e = throwError $ "Interpretation of internal function: " ++ show e
     ++ " is not yet implemented"
 
