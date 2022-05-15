@@ -36,14 +36,15 @@ type CheckTypeMemoryState = ExT (State CheckTypeMemory) CheckTypeMemory
 data MemoryObj = Var Type | Func Type [Type]
 
 -- | The representation of types used in Baalbolge for the purpose of type checking
-data Type = TUnit | TInt | TBool | TVar
+data Type = TUnit | TInt | TBool | TVar | TFunc Type [Type]
 
 instance Show Type
   where
-    show TUnit = "unit"
-    show TInt  = "int"
-    show TBool = "bool"
-    show TVar  = "var"
+    show TUnit       = "unit"
+    show TInt        = "int"
+    show TBool       = "bool"
+    show TVar        = "var"
+    show (TFunc _ _) = "func"
 
 {- | Specific implementation of Eq for types in type checker. TVar is equal to any type
 in Baalbolge.

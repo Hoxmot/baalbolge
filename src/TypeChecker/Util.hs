@@ -4,12 +4,12 @@ module TypeChecker.Util
       , typesError
   ) where
 
-import Control.Monad.Except
+import           Control.Monad.Except
 
 import qualified Baalbolge.Abs        as BG
 
 import           Baalbolge.Print
-import TypeChecker.Types
+import           TypeChecker.Types
 
 
 {- | Handler of 'variable not found' error, which adds details about the error
