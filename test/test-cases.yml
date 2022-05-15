@@ -13,10 +13,14 @@ good-cases:
       file: int-exit_code.bg
       out: 42
       return: 42
-    - name: If return code is bigger than 255, modulo is returned
-      file: int-exit_code-bigger-255.bg
+    - name: If return code is bigger than 256, modulo is returned
+      file: int-exit_code-bigger-256.bg
       out: 1234567890
-      return: 180
+      return: 210
+    - name: If return code is equal to 256, 0 is returned
+      file: int-exit_code-256.bg
+      out: 256
+      return: 0
     - name: Returns True
       file: bool-true.bg
       out: True
@@ -169,6 +173,70 @@ good-cases:
       file: when-false.bg
       out: ""
       return: 0
+    - name: Function declaration should return unit and only last variable call returns value
+      file: function-creation.bg
+      out: False
+      return: 1
+    - name: Function returning var should be able to return int
+      file: function-var-int.bg
+      out: 42
+      return: 42
+    - name: Function returning var should be able to return bool
+      file: function-var-bool.bg
+      out: True
+      return: 0
+    - name: Function returning var should be able to return unit
+      file: function-var-unit.bg
+      out: ""
+      return: 0
+    - name: Function returning int should return int
+      file: function-int.bg
+      out: 42
+      return: 42
+    - name: Function returning bool should return bool
+      file: function-bool.bg
+      out: False
+      return: 1
+    - name: Function returning unit should return unit
+      file: function-unit.bg
+      out: ""
+      return: 0
+    - name: Function returning var should be able to return int after multiple unit
+      file: function-multiple-unit-int.bg
+      out: 7
+      return: 7
+    - name: or should return True if either True
+      file: or.bg
+      out: ""
+      return: 0
+    - name: and should return True if both True
+      file: and.bg
+      out: ""
+      return: 0
+    - name: not should return True if False
+      file: not.bg
+      out: ""
+      return: 0
+    - name: ">= should return True if greater or equal"
+      file: ge.bg
+      out: ""
+      return: 0
+    - name: "< should return True if smaller"
+      file: lt.bg
+      out: ""
+      return: 0
+    - name: "<= should return True if smaller or equal"
+      file: le.bg
+      out: ""
+      return: 0
+    - name: factorial of 10 should return correct value
+      file: factorial.bg
+      out: 3628800
+      return: 0
+    - name: factorial of 10 should return correct value
+      file: fibonacci.bg
+      out: 267914296
+      return: 56
 
 bad-cases:
   path: ../examples/bad

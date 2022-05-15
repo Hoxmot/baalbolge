@@ -1,0 +1,12 @@
+(bool and [(bool b1) (bool b2)]
+  (if b1
+    b2
+    False))
+
+(bool t True)
+(bool f False)
+
+(if (and t f) 1 ())
+(if (and t t) () 2)
+(if (and f t) 3 ())
+(if (and f f) 4 ())

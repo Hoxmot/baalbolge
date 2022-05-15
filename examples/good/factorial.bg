@@ -1,0 +1,8 @@
+(int factorial [(int x)]
+  (int factorial-rec [(int x) (int acc)]
+    (if (> x 0)
+      (factorial-rec (- x 1) (* acc x))
+      acc))
+  (factorial-rec x 1))
+  
+(factorial 10)
