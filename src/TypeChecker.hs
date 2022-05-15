@@ -16,6 +16,7 @@ import qualified TypeChecker.Memory   as Mem
 import           TypeChecker.Types
 import           TypeChecker.Util
 import           Types                (Err)
+import TypeChecker.Types (Type(TFunc))
 
 
 {- | Checks the types in the given program. The check is pefrormed in a static manner.
@@ -231,7 +232,7 @@ checkTypesVar (BG.Var v) = do
     case M.lookup v st of
         Just o -> case o of
             Var t -> return t
-            Func _ _ -> throwError "Passing function as variable is not yet implemented!"
+            Func t argsList -> return $ TFunc t argsList
         Nothing -> throwError $ "Variable '" ++ v ++ "' not found!"
 
 
