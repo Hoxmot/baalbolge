@@ -1,0 +1,12 @@
+(bool >= [(int x) (int y)]
+  (if (> x y)
+    True
+    (= x y)))
+
+(int x 1)
+(int y 2)
+
+(if (>= x y) 1 ())
+(if (>= y x) () 2)
+(if (>= x x) () 3)
+(if (>= y y) () 4)

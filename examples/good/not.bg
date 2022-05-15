@@ -1,0 +1,10 @@
+(bool not [(bool b)]
+  (if b
+    False
+    True))
+
+(bool t True)
+(bool f False)
+
+(if (not t) 1 ())
+(if (not f) () 2)
