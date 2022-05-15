@@ -237,6 +237,18 @@ good-cases:
       file: fibonacci.bg
       out: 267914296
       return: 56
+    - name: Function can be passed as an argument to a function
+      file: function-as-argument.bg
+      out: 42
+      return: 42
+    - name: Lambda can be passed as an argument to a function
+      file: lambda-as-argument.bg
+      out: 42
+      return: 42
+    - name: Lambda can use arguments from a parent function, be returned, and later used
+      file: lambda-as-argument.bg
+      out: 42
+      return: 42
 
 bad-cases:
   path: ../examples/bad

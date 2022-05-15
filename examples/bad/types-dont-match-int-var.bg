@@ -1,0 +1,2 @@
+(var y True)
+(int x y) # Runtime exception

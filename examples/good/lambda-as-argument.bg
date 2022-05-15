@@ -1,0 +1,4 @@
+(var apply [(var f) (var v)]
+  (f v))
+
+(apply (int [(int x)] (+ x 1)) 41)
