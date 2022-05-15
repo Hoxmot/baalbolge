@@ -175,9 +175,36 @@ checkTypesIFunc iFunc@(BG.IWhile pos cond e) = do
     if condT == TBool
         then checkTypesExp e >>= \t -> return $ tSum TUnit t
         else throwError $ typesError iFunc "while loop" pos TBool condT
+
+{- | For the function declaration, we have to make sure that the type returned by the
+function body is the same as the declared return type. However, first, we have to make
+sure that all the expressions inside the body of the function have the correct type.
+
+The type of the function declaration is unit.
+-}
+checkTypesIFunc iFunc@(BG.IFuncDecl pos t (BG.Var v) (BG.AList _ argsList) exps) = do
+    tt <- checkTypesType t
+    args <- mapM argToType argsList
+    mem <- get
+    funcMem <- foldM createFuncMem mem argsList
+    case runReader (runExceptT $ checkTypesExps exps) (M.insert v (Func tt args) funcMem) of
+        Left l  -> throwError l
+        Right ft -> if tt == ft
+            then put (M.insert v (Func tt args) mem) >> return TUnit
+            else throwError $ typesError iFunc "function declaration" pos tt ft
+  where
+    argToType (BG.AArg _ at _) = checkTypesType at
+
 checkTypesIFunc e = throwError $ "Checking types for internal function: " ++ show e
     ++ " is not yet implemented"
 
+{- | Create an environment for the function to execute. The environment has to be separate
+from the state of the main program, because it can't modify it.
+-}
+createFuncMem :: CheckTypeMemory -> BG.Arg -> CheckTypeMemoryState
+createFuncMem env (BG.AArg _ t (BG.Var v)) = do
+    tt <- checkTypesType t
+    return $ M.insert v (Var tt) env
 
 
 {- | Returns the type of variable from the state. If there's no variable of the given name
