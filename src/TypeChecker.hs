@@ -199,6 +199,25 @@ checkTypesIFunc iFunc@(BG.IFuncDecl pos t (BG.Var v) (BG.AList _ argsList) exps)
   where
     argToType (BG.AArg _ at _) = checkTypesType at
 
+{- | For the lambda declaration, we have to make sure that the type returned by the
+function body is the same as the declared return type. However, first, we have to make
+sure that all the expressions inside the body of the function have the correct type.
+
+The type of the function declaration is the function itself.
+-}
+checkTypesIFunc iFunc@(BG.ILambda pos t (BG.AList _ argsList) exps) = do
+    tt <- checkTypesType t
+    args <- mapM argToType argsList
+    mem <- get
+    funcMem <- foldM createFuncMem mem argsList
+    case runReader (runExceptT $ checkTypesExps exps) funcMem of
+        Left l  -> throwError l
+        Right ft -> if tt == ft
+            then return $ TFunc tt args
+            else throwError $ typesError iFunc "lambda declaration" pos tt ft
+  where
+    argToType (BG.AArg _ at _) = checkTypesType at
+
 checkTypesIFunc e = throwError $ "Checking types for internal function: " ++ show e
     ++ " is not yet implemented"
 
