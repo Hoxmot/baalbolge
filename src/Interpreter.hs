@@ -319,7 +319,9 @@ interpretDiv [e1, e2] = do
     v1 <- interpretExp e1
     v2 <- interpretExp e2
     case (v1, v2) of
-        (RInt x, RInt y) -> return (RInt $ div x y)
+        (RInt x, RInt y) -> if y == 0
+            then throwError "Division by 0 is not allowed!"
+            else return (RInt $ div x y)
         (RInt _, t2) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t2 ++ "'!"
         (t1, _) -> throwError $ "Types don't match! Expected 'int', but got '" ++ pprintResult t1 ++ "'!"
 interpretDiv (_:_:_:_) = throwError "Too many arguments!"
