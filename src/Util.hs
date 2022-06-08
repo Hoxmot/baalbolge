@@ -5,6 +5,7 @@ module Util
       -- * Util functions
       , checkParentheses
       , exit
+      , getExpPos
       , showTree
       , printResponse
       , readCommand
@@ -17,6 +18,7 @@ module Util
 import           System.Exit       (ExitCode (ExitFailure), exitFailure,
                                     exitSuccess, exitWith)
 
+import qualified Baalbolge.Abs     as BG
 import           Baalbolge.Print   (Print, printTree)
 import           Interpreter.Types
 
@@ -84,7 +86,7 @@ printResponse :: Result -> IO ()
 printResponse RUnit     = putStrLn ""
 printResponse (RBool b) = print b
 printResponse (RInt v)  = print v
-printResponse RFunc {} = putStrLn "I'm a teapot"
+printResponse RFunc {}  = putStrLn "I'm a teapot"
 printResponse RBFunc {} = putStrLn "I'm a teapot"
 
 exit :: Result -> IO ()
@@ -105,3 +107,13 @@ notImplemented = putStrLn "Not yet implemented..."
 
 notImplementedError :: IO()
 notImplementedError = notImplemented >> putStrLn "Quitting..." >> exitFailure
+
+-- | Gets a position of the expression
+getExpPos :: BG.Exp -> BG.BNFC'Position
+getExpPos (BG.EInt pos _)      = pos
+getExpPos (BG.EBool pos _)     = pos
+getExpPos (BG.EFunc pos _ _)   = pos
+getExpPos (BG.EInternal pos _) = pos
+getExpPos (BG.EVar pos _)      = pos
+getExpPos (BG.EUnit pos)       = pos
+getExpPos (BG.EList pos _)     = pos
