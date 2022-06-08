@@ -21,6 +21,7 @@ IIf.       InternalFunc ::= "if" Exp Exp Exp ;
 IWhile.    InternalFunc ::= "while" Exp Exp ;
 IWhen.     InternalFunc ::= "when" Exp Exp ;
 IConc.     InternalFunc ::= ";" [SameState] ;
+IPrint.    InternalFunc ::= "print" [Exp] ;
 
 SState. SameState ::= Exp ;
 
