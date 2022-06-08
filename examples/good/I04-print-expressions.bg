@@ -1,0 +1,8 @@
+(bool <= [(int x) (int y)]
+  (if (> y x)
+    True
+    (= x y)))
+
+(int x 0)
+(while (<= x 7)
+  (print x (int x (+ x 1))))

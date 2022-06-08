@@ -249,6 +249,25 @@ good-cases:
       file: lambda-as-argument.bg
       out: 42
       return: 42
+    - name: Evaluates expressions and prints their value
+      file: I04-print-expressions.bg
+      out: |
+        0 
+        1 
+        2 
+        3 
+        4 
+        5 
+        6 
+        7 
+
+      return: 0
+    - name: Prints given values
+      file: I04-print-values.bg
+      out: |
+        4 2 True False
+
+      return: 0
 
 bad-cases:
   path: ../examples/bad

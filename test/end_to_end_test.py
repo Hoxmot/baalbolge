@@ -8,11 +8,15 @@ INTERPRETER_PATH = '../build/baalbolge'
 
 
 def expected_to_string(expected):
-    return '\n<<<<<<<<<<\n{}\n----------\n'.format(expected)
+    lines = expected.split('\n')
+    expected_string = '\n'.join(map(lambda x: '\\n' if not x else x, lines))
+    return '\n<<<<<<<<<<\n{}\n----------\n'.format(expected_string)
 
 
 def output_to_string(output):
-    return '\n>>>>>>>>>>\n{}\n----------\n'.format(output)
+    lines = output.split('\n')
+    output_string = '\n'.join(map(lambda x: '\\n' if not x else x, lines))
+    return '\n<<<<<<<<<<\n{}\n----------\n'.format(output_string)
 
 
 class TestRunner:
