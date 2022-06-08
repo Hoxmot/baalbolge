@@ -16,6 +16,7 @@ import qualified TypeChecker.Memory   as Mem
 import           TypeChecker.Types
 import           TypeChecker.Util
 import           Types                (Err)
+import Util (getExpPos)
 
 
 {- | Checks the types in the given program. The check is pefrormed in a static manner.
@@ -218,6 +219,19 @@ checkTypesIFunc iFunc@(BG.ILambda pos t (BG.AList _ argsList) exps) = do
   where
     argToType (BG.AArg _ at _) = checkTypesType at
 
+{- | For the print function, we check all the arguments and the types to which they'll
+evaluate. If any of the evaluated values is a function, we thorw an error as we can't
+print functions.
+
+The type of the function is unit.
+-}
+checkTypesIFunc iFunc@(BG.IPrint pos exps) =
+    checkTypesPrint exps `catchError` printTypesErrorHandler iFunc pos
+  where
+    checkTypesPrint exps = do
+        mapM_ checkPrintTypeExp exps
+        return TUnit
+
 checkTypesIFunc e = throwError $ "Checking types for internal function: " ++ show e
     ++ " is not yet implemented"
 
@@ -284,3 +298,15 @@ checkTypesType (BG.TVar _) = return TVar
 checkTypesType (BG.TBool _) = return TBool
 checkTypesType e = throwError $ "Checking types of type: " ++ show e
     ++ " is not yet implemented"
+
+{- | Checks the types of each of the arguments for the print function. Only functions
+cannot be printed. The rest of the values can be printed.
+It's worth noting that all the expressions are evaluated, regardless if they return a unit
+or other value.
+-}
+checkPrintTypeExp :: BG.Exp -> CheckTypeState
+checkPrintTypeExp ex = do
+    t <- checkTypesExp ex
+    case t of
+        TFunc _ _ -> throwError (notPrintableError ex $ getExpPos ex)
+        _ -> return t
