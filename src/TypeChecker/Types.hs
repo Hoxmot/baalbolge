@@ -17,20 +17,20 @@ module TypeChecker.Types
 
 import qualified Data.Map             as M
 
-import           Control.Monad.Except
-import           Control.Monad.Reader
-import           Control.Monad.State
+import           Control.Monad.Reader (ReaderT)
+import           Control.Monad.State  (StateT)
+
+import           Types                (ExT)
 
 
 -- Internal types
 type Name = String
-type ExT = ExceptT String
 
 type CheckTypeMemory = M.Map Name MemoryObj
 
-type CheckTypeReader = ExT (Reader CheckTypeMemory) Type
-type CheckTypeState =  ExT (State CheckTypeMemory) Type
-type CheckTypeMemoryState = ExT (State CheckTypeMemory) CheckTypeMemory
+type CheckTypeReader = ExT (ReaderT CheckTypeMemory IO) Type
+type CheckTypeState =  ExT (StateT CheckTypeMemory IO) Type
+type CheckTypeMemoryState = ExT (StateT CheckTypeMemory IO) CheckTypeMemory
 
 -- Internal datastructures
 data MemoryObj = Var Type | Func Type [Type]

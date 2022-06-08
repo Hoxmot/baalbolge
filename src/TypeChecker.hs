@@ -16,7 +16,7 @@ import qualified TypeChecker.Memory   as Mem
 import           TypeChecker.Types
 import           TypeChecker.Util
 import           Types                (Err)
-import Util (getExpPos)
+import           Util                 (getExpPos)
 
 
 {- | Checks the types in the given program. The check is pefrormed in a static manner.
@@ -27,10 +27,12 @@ For the whole program, any type other than function can be returned.
 -}
 checkTypes :: BG.Exps -> Err BG.Exps
 checkTypes prog@(BG.Program _ exps) = do
-    ret <- runReader (runExceptT $ checkTypesExps exps) Mem.initialTypeCheckerMem
+    ret <- lift $ runReaderT (runExceptT $ checkTypesExps exps) Mem.initialTypeCheckerMem
     case ret of
-        TFunc _ _ -> throwError "The program cannot return a function!"
-        _ -> return prog
+        Left left -> throwError left
+        Right right -> case right of
+            TFunc _ _ -> throwError "The program cannot return a function!"
+            _         -> return prog
 
 
 
@@ -42,7 +44,8 @@ For the list of Exps, any type can be returned.
 checkTypesExps :: [BG.Exp] -> CheckTypeReader
 checkTypesExps exps = do
     env <- ask
-    case evalState (runExceptT $ checkTypesExpsRec TUnit exps) env of
+    ret <- lift $ lift $ evalStateT (runExceptT $ checkTypesExpsRec TUnit exps) env
+    case ret of
         Left l  -> throwError l
         Right r -> return r
 
@@ -77,7 +80,7 @@ checkTypesExpsRec tp _ = return tp
 $setup
 >>> let p = Just (2,2)
 >>> let b = (BG.BTrue p)
->>> test e = evalState (runExceptT e) M.empty
+>>> test e = evalStateT (runExceptT e) M.empty
 
 >>> test $ checkTypesExp (BG.EUnit p)
 Right unit
@@ -192,7 +195,9 @@ checkTypesIFunc iFunc@(BG.IFuncDecl pos t (BG.Var v) (BG.AList _ argsList) exps)
     args <- mapM argToType argsList
     mem <- get
     funcMem <- foldM createFuncMem mem argsList
-    case runReader (runExceptT $ checkTypesExps exps) (M.insert v (Func tt args) funcMem) of
+    ret <- lift $ lift $
+        runReaderT (runExceptT $ checkTypesExps exps) (M.insert v (Func tt args) funcMem)
+    case ret of
         Left l  -> throwError l
         Right ft -> if tt == ft
             then put (M.insert v (Func tt args) mem) >> return TUnit
@@ -211,7 +216,8 @@ checkTypesIFunc iFunc@(BG.ILambda pos t (BG.AList _ argsList) exps) = do
     args <- mapM argToType argsList
     mem <- get
     funcMem <- foldM createFuncMem mem argsList
-    case runReader (runExceptT $ checkTypesExps exps) funcMem of
+    ret <- lift $ lift $ runReaderT (runExceptT $ checkTypesExps exps) funcMem
+    case ret of
         Left l  -> throwError l
         Right ft -> if tt == ft
             then return $ TFunc tt args
@@ -226,11 +232,9 @@ print functions.
 The type of the function is unit.
 -}
 checkTypesIFunc iFunc@(BG.IPrint pos exps) =
-    checkTypesPrint exps `catchError` printTypesErrorHandler iFunc pos
+    checkTypesPrint `catchError` printTypesErrorHandler iFunc pos
   where
-    checkTypesPrint exps = do
-        mapM_ checkPrintTypeExp exps
-        return TUnit
+    checkTypesPrint = mapM_ checkPrintTypeExp exps >> return TUnit
 
 checkTypesIFunc e = throwError $ "Checking types for internal function: " ++ show e
     ++ " is not yet implemented"
@@ -248,7 +252,7 @@ createFuncMem env (BG.AArg _ t (BG.Var v)) = do
 in the state, an error is thrown.
 
 $setup
->>> test st e = evalState (runExceptT e) st
+>>> test st e = evalStateT (runExceptT e) st
 
 >>> test (M.singleton "x" (Var TBool)) $ checkTypesVar (BG.Var "x")
 Right bool
@@ -277,7 +281,7 @@ implementation.
 
 $setup
 >>> let p = Just (2,2)
->>> test e = evalState (runExceptT e) M.empty
+>>> test e = evalStateT (runExceptT e) M.empty
 
 >>> test $ checkTypesType (BG.TInt p)
 Right int
@@ -308,5 +312,5 @@ checkPrintTypeExp :: BG.Exp -> CheckTypeState
 checkPrintTypeExp ex = do
     t <- checkTypesExp ex
     case t of
-        TFunc _ _ -> throwError (notPrintableError ex $ getExpPos ex)
-        _ -> return t
+        TFunc _ _ -> throwError $ notPrintableError ex (getExpPos ex) t
+        _         -> return t

@@ -4,8 +4,10 @@ module Interpreter.Util
       , unionRight
       , typesError
       , varNotFoundHandler
+      , printTypesErrorHandler
       , pprintResult
       , pprintType
+      , notPrintableError
   ) where
 
 
@@ -28,12 +30,18 @@ typeEq (BG.TUnit _) RUnit     = True
 typeEq (BG.TUnit _) _         = False
 typeEq _ _                    = False
 
+
 {- | Handler of 'variable not found' error, which adds details about the error
 for more readability.
 -}
 varNotFoundHandler :: Print a => a -> BG.BNFC'Position -> String -> InterpreterState
 varNotFoundHandler ex pos er =
     throwError $ varNotFoundError ex ("Runtime exception! " ++ er) pos
+
+-- | Handler of 'types don't match' error for print function.
+printTypesErrorHandler :: Print a => a -> BG.BNFC'Position -> String -> InterpreterState
+printTypesErrorHandler ex pos er = throwError $ printTypesError ex er pos
+
 
 -- | Creates a message about types error in the code.
 typesError :: Print a => a -> String -> BG.BNFC'Position -> String -> String -> String
@@ -46,6 +54,15 @@ typesError ex op Nothing t1 t2 =
     ++ "' at undetermined position:\n  Expected '" ++ t1
     ++ "' but got '" ++ t2 ++ "'!\n    (" ++ printTree ex ++ ")"
 
+-- | Creates a message about types error inside the print internal function.
+notPrintableError :: Print a => a -> BG.BNFC'Position -> String -> String
+notPrintableError ex (Just (line, col)) t = "Types don't match! In line " ++ show line
+    ++ ", column " ++ show col ++ ":\n  Expected printable, but got '" ++  t
+    ++ "'. You cannot print a function!\n    " ++ printTree ex
+notPrintableError ex Nothing t =
+    "Types don't match! At undetermined position:\n  Expected printable, but got '" ++ t
+    ++ "'. You cannot print a function!\n    " ++ printTree ex
+
 {- | Extends a simple information regaring 'variable not found' error with information
 position of the erorr and the code itself.
 -}
@@ -54,6 +71,18 @@ varNotFoundError ex er (Just (line, col)) = er ++ "\n  In line " ++ show line
     ++ ", column " ++ show col ++ ":\n    " ++ printTree ex
 varNotFoundError ex er Nothing = er ++ "\n  At undetermined position:\n    "
     ++ printTree ex
+
+{- | Extends a simple information regarding 'types don't match' for internal function
+print. Nicely wraps the error and adds more information.
+-}
+printTypesError :: Print a => a -> String -> BG.BNFC'Position -> String
+printTypesError ex er (Just (line, col)) =
+    "Runtime exception! Types don't match! In operation 'print' in line " ++ show line
+    ++ ", column " ++ show col ++ ":\n  " ++ printTree ex ++ "\nRoot exception:\n" ++ er
+printTypesError ex er Nothing =
+    "Runtime exception! Types don't match! In operation 'print' at undetermined position:\n  "
+    ++ printTree ex ++ "Root exception:\n" ++ er
+
 
 -- | Pretty prints the type used in Baalbolge
 pprintType :: BG.Type -> String

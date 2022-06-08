@@ -8,6 +8,7 @@ module Util
       , getExpPos
       , showTree
       , printResponse
+      , printShow
       , readCommand
 
       -- * Not implemented handling
@@ -83,11 +84,14 @@ showTree tree = do
     putStrLn $ "\n[Linearized tree]\n\n" ++ printTree tree
 
 printResponse :: Result -> IO ()
-printResponse RUnit     = putStrLn ""
-printResponse (RBool b) = print b
-printResponse (RInt v)  = print v
-printResponse RFunc {}  = putStrLn "I'm a teapot"
-printResponse RBFunc {} = putStrLn "I'm a teapot"
+printResponse res = putStrLn $ printShow res
+
+printShow :: Result -> String
+printShow RUnit     = ""
+printShow (RBool b) = show b
+printShow (RInt v)  = show v
+printShow RFunc {}  = "I'm a teapot"
+printShow RBFunc {} = "I'm a teapot"
 
 exit :: Result -> IO ()
 exit RUnit = exitSuccess
