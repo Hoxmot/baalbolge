@@ -16,17 +16,20 @@ import qualified Baalbolge.Abs        as BG
 import           Interpreter.Types
 import           Interpreter.Util
 import           Types
+import           Util                 (getExpPos, printShow)
 
 
 {- | Interprets the whole program and returns its result or an error.
 -}
 interpret :: BG.Exps -> Err Result
 interpret (BG.Program _ exps) = do
-    ret <- runReader (runExceptT $ interpretExps exps) initialInterpreterMem
+    ret <- lift $ runReaderT (runExceptT $ interpretExps exps) initialInterpreterMem
     case ret of
-        RFunc {} -> throwError "Runtime exception! The program cannot return a function!"
-        RBFunc _ -> throwError "Runtime exception! The program cannot return a function!"
-        _ -> return ret
+        Left left -> throwError left
+        Right right -> case right of
+            RFunc {} -> throwError "Runtime exception! The program cannot return a function!"
+            RBFunc _ -> throwError "Runtime exception! The program cannot return a function!"
+            result -> return result
 
 
 
@@ -36,7 +39,8 @@ interpret (BG.Program _ exps) = do
 interpretExps :: [BG.Exp] -> InterpreterReader
 interpretExps exps = do
     mem <- ask
-    case evalState (runExceptT $ interpretExpsRec RUnit exps) mem of
+    res <- lift $ lift $ evalStateT (runExceptT $ interpretExpsRec RUnit exps) mem
+    case res of
         Left l  -> throwError l
         Right r -> return r
 
@@ -60,7 +64,7 @@ interpretExpsRec r _ = return r
 $setup
 >>> let p = Just (2,2)
 >>> let b = (BG.BTrue p)
->>> test e = evalState (runExceptT e) M.empty
+>>> test e = evalStateT (runExceptT e) M.empty
 
 >>> test $ interpretExp (BG.EUnit p)
 Right unit
@@ -101,7 +105,8 @@ interpretFuncCall (BG.Var v) args = do
 interpretFunction :: BG.Type -> [Arg] -> [BG.Exp] -> InterpreterMemory -> [BG.Exp] -> InterpreterState
 interpretFunction ft argsList exps funcState args = do
     funcMem <- createFuncEnv funcState argsList args
-    case runReader (runExceptT $ interpretFuncBody ft exps) funcMem of
+    res <- lift $ lift $ runReaderT (runExceptT $ interpretFuncBody ft exps) funcMem
+    case res of
         Left l  -> throwError l
         Right r -> return r
 
@@ -218,16 +223,26 @@ interpretIFunc (BG.ILambda _ t (BG.AList _ argsList) exps) =
   where
     argsMapper (BG.AArg _ at (BG.Var av)) = Arg at av
 
+{- | Prints the values of expressions given as arguments. Cannot print functions.
+
+The result of the print function is unit.
+-}
+interpretIFunc iFunc@(BG.IPrint pos exps) =
+    printExps `catchError` printTypesErrorHandler iFunc pos
+  where
+    printExps = do
+        toPrint <- mapM printTypeChecker exps
+        lift $ lift $ putStrLn $ unwords $ map printShow toPrint
+        return RUnit
+
 interpretIFunc e = throwError $ "Interpretation of internal function: " ++ show e
     ++ " is not yet implemented"
-
-
 
 {- | Interprets a variable and returns its value. If there's no variable of the given name
 in the state, an error is thrown.
 
 $setup
->>> test st e = evalState (runExceptT e) st
+>>> test st e = evalStateT (runExceptT e) st
 
 >>> test (M.singleton "x" (Var (RBool True))) $ interpretVar (BG.Var "x")
 Right bool True
@@ -253,7 +268,7 @@ interpretVar (BG.Var v) = do
 
 $setup
 >>> let p = Just (2,2)
->>> test e = evalState (runExceptT e) M.empty
+>>> test e = evalStateT (runExceptT e) M.empty
 
 >>> test $ interpretBool (BG.BTrue p)
 Right bool True
@@ -265,6 +280,19 @@ interpretBool :: BG.Bool -> InterpreterState
 interpretBool (BG.BTrue _)  = return $ RBool True
 interpretBool (BG.BFalse _) = return $ RBool False
 
+
+{- | A function, which checks the type of the expression we'd like to print. We need it
+as we can't print functions (yet), which are also valid expressions.
+
+If the value is a function, we throw an error. If it's not, we simply return it.
+-}
+printTypeChecker :: BG.Exp -> InterpreterState
+printTypeChecker ex = do
+    res <- interpretExp ex
+    case res of
+        RBFunc _ -> throwError $ notPrintableError ex (getExpPos ex) $ pprintResult res
+        RFunc {} -> throwError $ notPrintableError ex (getExpPos ex) $ pprintResult res
+        val      -> return val
 
 
 initialInterpreterMem :: InterpreterMemory

@@ -34,14 +34,13 @@ typesError ex op Nothing t1 t2 = "Types don't match! In operation '" ++ op
     ++ "' but got '" ++ show t2 ++ "'!\n    (" ++ printTree ex ++ ")"
 
 -- | Creates a message about types error inside the print internal function.
-notPrintableError :: Print a => a -> BG.BNFC'Position -> String
-notPrintableError ex (Just (line, col)) = "Types don't match! In line " ++ show line
-    ++ ", column " ++ show col
-    ++ ":\n  Expected printable, but got function. You cannot print a function!\n    "
-    ++ printTree ex
-notPrintableError ex Nothing =
-    "Types don't match! At undetermined position:\n  Expected printable, but got function."
-    ++ " You cannot print a function!\n    " ++ printTree ex
+notPrintableError :: Print a => a -> BG.BNFC'Position -> Type -> String
+notPrintableError ex (Just (line, col)) t = "Types don't match! In line " ++ show line
+    ++ ", column " ++ show col ++ ":\n  Expected printable, but got '" ++ show t
+    ++ "'. You cannot print a function!\n    " ++ printTree ex
+notPrintableError ex Nothing t =
+    "Types don't match! At undetermined position:\n  Expected printable, but got '"
+    ++ show t ++ "'. You cannot print a function!\n    " ++ printTree ex
 
 {- | Extends a simple information regaring 'variable not found' error with information
 position of the erorr and the code itself.

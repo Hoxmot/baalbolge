@@ -1,24 +1,27 @@
-import           System.Environment (getArgs)
-import           System.Exit        (exitFailure, exitSuccess)
-import           System.IO          (hFlush, stdout)
+import           Control.Monad.Except (MonadError (throwError), runExceptT)
+import           System.Environment   (getArgs)
+import           System.Exit          (exitFailure, exitSuccess)
+import           System.IO            (hFlush, stdout)
 
-import qualified Interpreter        (interpret)
-import qualified TypeChecker        (checkTypes)
-import qualified Util               (checkParentheses, exit, notImplemented,
-                                     readCommand)
+import qualified Interpreter          (interpret)
+import qualified TypeChecker          (checkTypes)
+import qualified Util                 (checkParentheses, exit, notImplemented,
+                                       readCommand)
 
-import           Baalbolge.Par      (myLexer, pExps)
-import           Interpreter.Types  (Result)
-import           Types              (Err)
-import           Util               (Command (..), printResponse)
+import           Baalbolge.Abs        (Exps)
+import           Baalbolge.Par        (myLexer, pExps)
+import           Interpreter.Types    (Result)
+import           Types                (Err)
+import           Util                 (Command (..), printResponse)
 
 
 fileMode :: FilePath -> IO ()
 fileMode f = putStrLn f >> readFile f >>= runFile
 
 runFile :: String -> IO ()
-runFile s =
-    case run s of
+runFile s = do
+    progRes <- runExceptT $ run s
+    case progRes of
         Left err  -> putStrLn err >> exitFailure
         Right res -> Util.printResponse res >> Util.exit res
 
@@ -31,10 +34,10 @@ readStdIn line c = do
     hFlush stdout
     currentLine <- getLine
     case Util.readCommand currentLine of
-      Exit  -> exitSuccess
-      -- TODO: #17
-      Help  -> Util.notImplemented
-      Parse -> continueParse line currentLine c
+        Exit  -> exitSuccess
+        -- TODO: #17
+        Help  -> Util.notImplemented
+        Parse -> continueParse line currentLine c
 
 continueParse :: String -> String -> Int -> IO ()
 continueParse line currentLine c =
@@ -46,18 +49,24 @@ continueParse line currentLine c =
     allLines = line ++ '\n':currentLine
 
 runInteractive :: String -> IO ()
-runInteractive s =
-    case run s of
-      Left err -> do
-        putStrLn err
-      Right res -> do
-        Util.printResponse res
+runInteractive s = do
+    progRes <- runExceptT $ run s
+    case progRes of
+        Left err  -> putStrLn err
+        Right res -> Util.printResponse res
 
 run :: String -> Err Result
 run s = do
-    e1 <- pExps $ myLexer s
+    e1 <- runLexer s
     e2 <- TypeChecker.checkTypes e1
     Interpreter.interpret e2
+
+runLexer :: String -> Err Exps
+runLexer s =
+    case pExps $ myLexer s of
+        Left l  -> throwError l
+        Right r -> return r
+
 
 usage :: IO ()
 usage = do

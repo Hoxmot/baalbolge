@@ -17,8 +17,8 @@ module Interpreter.Types
 import qualified Data.Map             as M
 
 import           Control.Monad.Except
-import Control.Monad.Reader ( Reader )
-import           Control.Monad.State
+import           Control.Monad.Reader (ReaderT)
+import           Control.Monad.State  (StateT)
 
 import qualified Baalbolge.Abs        as BG
 
@@ -34,10 +34,10 @@ data Result = RUnit
 
 instance Show Result
   where
-    show RUnit = "unit"
-    show (RInt i) = "int " ++ show i
+    show RUnit     = "unit"
+    show (RInt i)  = "int " ++ show i
     show (RBool b) = "bool " ++ show b
-    show RFunc {} = "func"
+    show RFunc {}  = "func"
     show RBFunc {} = "built-in"
 
 type ExT = ExceptT String
@@ -46,9 +46,9 @@ type Name = String
 
 type InterpreterMemory = M.Map Name MemoryObj
 
-type InterpreterReader = ExT (Reader InterpreterMemory) Result
-type InterpreterState = ExT (State InterpreterMemory) Result
-type InterpreterMemoryState = ExT (State InterpreterMemory) InterpreterMemory
+type InterpreterReader = ExT (ReaderT InterpreterMemory IO) Result
+type InterpreterState = ExT (StateT InterpreterMemory IO) Result
+type InterpreterMemoryState = ExT (StateT InterpreterMemory IO) InterpreterMemory
 
 type BuiltInFunction = [BG.Exp] -> InterpreterState
 data Arg = Arg BG.Type Name
